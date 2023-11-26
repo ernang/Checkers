@@ -9,24 +9,31 @@ import edu.upc.epsevg.prop.checkers.PlayerType;
 import edu.upc.epsevg.prop.checkers.SearchType;
 import java.awt.Point;
 import java.util.ArrayList;
-import static java.util.Collections.list;
 import java.util.List;
 import java.util.Random;
 
 /**
- * Jugador aleatori
+ * La classe Negreira implementa un jugador que utilitza l'algorisme MiniMax per
+ * decidir el seu pròxim moviment en el joc Checkers. Aquesta classe implementa
+ * les interfícies IPlayer i IAuto.
  *
- * @author bernat
+ * @author Ernest
+ * @author Naïm
  */
 public class Negreira implements IPlayer, IAuto {
 
     private String name;
-    private GameStatus s;
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
     private int profunditat = 4;
     private List<Point> millorJugada = new ArrayList<>();
 
+    /**
+     * Constructor de la classe Negreira.
+     *
+     * @param name El nom del jugador.
+     * @param profunditat La profunditat màxima de l'arbre de cerca.
+     */
     public Negreira(String name, int profunditat) {
         this.name = name;
         this.profunditat = profunditat;
@@ -49,116 +56,98 @@ public class Negreira implements IPlayer, IAuto {
      */
     @Override
     public PlayerMove move(GameStatus s) {
-        return new PlayerMove(miniMax(s), 0L, 0, SearchType.MINIMAX);
-
+        List<Point> ll = miniMax(s);
+        for (Point point : ll) {
+            System.out.println("Punt -> " + point.toString());
+        }
+        System.out.println("----------------------------");
+        return new PlayerMove(ll, 0L, 0, SearchType.RANDOM);
     }
 
+    /**
+     * Implementació de l'algorisme MiniMax.
+     *
+     * @param s L'estat actual del joc.
+     * @return Una llista de punts que representa el millor moviment.
+     */
     private List<Point> miniMax(GameStatus s) {
-        int heuristicaActual = -20000;
-        jugadorMaxim = s.getCurrentPlayer();
-        jugadorMinim = PlayerType.opposite(s.getCurrentPlayer());
-        int alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
-        List<MoveNode> moves = s.getMoves();
+        List<MoveNode> llistaMoviments = s.getMoves();
         List<Point> points = new ArrayList<>();
-        if (moves.isEmpty()) {
-            return points;
-        }
-        for (MoveNode moviment : moves) {
-            GameStatus aux = new GameStatus(s);
-            List<MoveNode> fillsMoviment = moviment.getChildren();
-            for (MoveNode j : fillsMoviment) {
-                points = llistaDelMoviment(j);
-                points.addFirst(moviment.getPoint());
+
+        for (MoveNode moviment : llistaMoviments) {
+            List<Point> points_aux = new ArrayList<>();
+            if (moviment.isJump()) {
+                points_aux.add(moviment.getJumpedPoint());
+            } else {
+                points_aux.add(moviment.getPoint());
             }
-            aux.movePiece(points);
-            int valorHeuristic = minValor(aux, profunditat - 1, alpha, beta);
-            if (valorHeuristic > heuristicaActual) {
-                heuristicaActual = valorHeuristic;
-                points = millorJugada;
+            for (MoveNode fill : moviment.getChildren()) {
+                List<Point> camiFill = obtenirCamiMesLlarg(fill);
+                if (fill.getChildren().isEmpty()) {
+                    points_aux.add(fill.getPoint());
+                } else {
+                    System.out.println("Camí fill -> " + camiFill.size());
+                    if (camiFill.size() > points_aux.size()) {
+                        System.out.println("I'm larger than my father");
+                        points_aux.addAll(camiFill);
+                        if (moviment.isJump()) {
+                            points_aux.add(0,moviment.getJumpedPoint());
+                        } else {
+                            points_aux.add(0,moviment.getPoint());
+                        }
+                    }
+                }
             }
-            alpha = Math.max(alpha, heuristicaActual);
+            if (points.size() < points_aux.size()) {
+                points = points_aux;
+            }
         }
         return points;
     }
 
-    private int maxValor(GameStatus s, int depth, int alpha, int beta) {
-        int valorHeuristic = -10000;
-        if (s.GetWinner() == jugadorMinim) {
-            return valorHeuristic;
-        }
-        if (depth == 0 || !s.currentPlayerCanMove()) {
-            return heuristica(s);
+    /**
+     * Busca el camí més profund de l'arbre de moviments.
+     *
+     * @param moviment El node de moviment actual.
+     * @return Una llista de punts que representa el camí més llarg.
+     */
+    private List<Point> obtenirCamiMesLlarg(MoveNode moviment) {
+        List<Point> camiMesLlarg = new ArrayList<>();
+        if (moviment.isJump()) {
+            camiMesLlarg.add(moviment.getJumpedPoint());
+        } else {
+            camiMesLlarg.add(moviment.getPoint());
         }
 
-        List<MoveNode> moviments = s.getMoves();
-        for (MoveNode moviment : moviments) {
-
-            GameStatus aux = new GameStatus(s);
-            List<MoveNode> fillsMoviment = moviment.getChildren();
-            for (MoveNode fill : fillsMoviment) {
-                millorJugada = llistaDelMoviment(fill);
-                millorJugada.add(0, moviment.getPoint());
-            }
-            aux.movePiece(millorJugada);
-            valorHeuristic = minValor(aux, depth - 1, alpha, beta);
-            alpha = Math.max(valorHeuristic, alpha);
-            if (alpha >= beta) {
-                break;
+        List<MoveNode> fills = moviment.getChildren();
+        if (!fills.isEmpty()) {
+            for (MoveNode fill : fills) {
+                List<Point> camiFill = obtenirCamiMesLlarg(fill);
+                if (camiFill.size() > camiMesLlarg.size()) {
+                    camiMesLlarg = camiFill;
+                }
             }
         }
-        return valorHeuristic;
+        return camiMesLlarg;
     }
 
-    private int minValor(GameStatus s, int depth, int alpha, int beta) {
-        int valorHeuristic = 10000;
-        if (s.GetWinner() == jugadorMaxim) {
-            return valorHeuristic;
-        }
-        if (depth == 0 || !s.currentPlayerCanMove()) {
-            return heuristica(s);
-        }
-
-        List<MoveNode> moviments = s.getMoves();
-        for (MoveNode moviment : moviments) {
-
-            GameStatus aux = new GameStatus(s);
-            List<MoveNode> fillsMoviment = moviment.getChildren();
-            for (MoveNode fill : fillsMoviment) {
-                millorJugada = llistaDelMoviment(fill);
-                millorJugada.add(0, moviment.getPoint());
-            }
-            aux.movePiece(millorJugada);
-            valorHeuristic = maxValor(aux, depth - 1, alpha, beta);
-            beta = Math.min(valorHeuristic, beta);
-            if (alpha >= beta) {
-                break;
-            }
-        }
-        return valorHeuristic;
-    }
-
-    private int heuristica(GameStatus s) {
+    /*private int heuristica(GameStatus s) {
         return 0;
     }
 
-    private List<Point> llistaDelMoviment(MoveNode moviment) {
+    private List<Point> llistaDelMoviment(PlayerType joga, MoveNode moviment) {
         List<Point> result = new ArrayList<>();
         result.add(moviment.getPoint()); // Add the starting point of the move
 
-        if (moviment.getChildren().size() > 0) {
+        if (!moviment.getChildren().isEmpty()) {
             // Recursively add points for each child move
             for (MoveNode child : moviment.getChildren()) {
-                result.addAll(llistaDelMoviment(child));
+                System.out.println("Moviment de" + joga.toString() + "->" + child.getPoint().toString());
             }
         }
 
         return result;
-    }
-
-    private int calcularValorHeuristic(List<MoveNode> arbre) {
-        return 0;
-    }
-
+    }*/
     /**
      * Ens avisa que hem de parar la cerca en curs perquè s'ha exhaurit el temps
      * de joc.
@@ -167,5 +156,4 @@ public class Negreira implements IPlayer, IAuto {
     public String getName() {
         return name;
     }
-
 }
