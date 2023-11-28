@@ -179,62 +179,6 @@ public class MickeyLaRata implements IPlayer, IAuto {
         }
     }
 
-    private List<Point> obtenirPuntsAuxiliars(MoveNode moviment) {
-        List<Point> points_aux = new ArrayList<>();
-
-        if (moviment.isJump()) {
-            points_aux.add(moviment.getJumpedPoint());
-        } else {
-            points_aux.add(moviment.getPoint());
-        }
-
-        for (MoveNode fill : moviment.getChildren()) {
-            List<Point> camiFill = obtenirCamiMesLlarg(fill);
-
-            if (fill.getChildren().isEmpty()) {
-                points_aux.add(fill.getPoint());
-            } else {
-                if (camiFill.size() > points_aux.size()) {
-                    points_aux.addAll(camiFill);
-
-                    if (moviment.isJump()) {
-                        points_aux.add(0, moviment.getJumpedPoint());
-                    } else {
-                        points_aux.add(0, moviment.getPoint());
-                    }
-                }
-            }
-        }
-
-        return points_aux;
-    }
-
-    /**
-     * Busca el camí més profund de l'arbre de moviments.
-     *
-     * @param moviment El node de moviment actual.
-     * @return Una llista de punts que representa el camí més llarg.
-     */
-    private List<Point> obtenirCamiMesLlarg(MoveNode moviment) {
-        List<Point> camiMesLlarg = new ArrayList<>();
-        if (moviment.isJump()) {
-            camiMesLlarg.add(moviment.getJumpedPoint());
-        } else {
-            camiMesLlarg.add(moviment.getPoint());
-        }
-
-        List<MoveNode> fills = moviment.getChildren();
-        if (!fills.isEmpty()) {
-            for (MoveNode fill : fills) {
-                List<Point> camiFill = obtenirCamiMesLlarg(fill);
-                if (camiFill.size() > camiMesLlarg.size()) {
-                    camiMesLlarg = camiFill;
-                }
-            }
-        }
-        return camiMesLlarg;
-    }
-
     private int evaluarEstat(GameStatus s) {
         return 0;
     }
