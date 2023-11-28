@@ -20,7 +20,7 @@ import java.util.Random;
  * @author Ernest
  * @author Naïm
  */
-public class Negreira implements IPlayer, IAuto {
+public class MickeyLaRata implements IPlayer, IAuto {
 
     private String name;
     private PlayerType jugadorMaxim;
@@ -35,7 +35,7 @@ public class Negreira implements IPlayer, IAuto {
      * @param name El nom del jugador.
      * @param profunditat La profunditat màxima de l'arbre de cerca.
      */
-    public Negreira(String name, int profunditat) {
+    public MickeyLaRata(String name, int profunditat) {
         this.name = name;
         this.profunditat = profunditat;
         if (profunditat < 1) {
@@ -73,14 +73,13 @@ public class Negreira implements IPlayer, IAuto {
      */
     private List<Point> miniMax(GameStatus s) {
         List<MoveNode> llistaMoviments = s.getMoves();
+        List<List<Point>> punts = obtenirMoviments(llistaMoviments);
         List<Point> points = new ArrayList<>();
         int heuristicaActual = -20000, alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
-
-        for (MoveNode moviment : llistaMoviments) {
-            List<Point> points_aux = obtenirPuntsAuxiliars(moviment);
+        for (List<Point>moviment : punts) {
 
             GameStatus aux = new GameStatus(s);
-            aux.movePiece(points_aux);
+            aux.movePiece(moviment);
 
             int valorHeuristic = minValor(aux, profunditat - 1, alpha, beta);
 
@@ -88,8 +87,8 @@ public class Negreira implements IPlayer, IAuto {
                 heuristicaActual = valorHeuristic;
             }
 
-            if (points.size() < points_aux.size()) {
-                points = points_aux;
+            if (points.size() < moviment.size()) {
+                points = moviment;
             }
 
             alpha = Math.max(alpha, heuristicaActual);
@@ -109,15 +108,10 @@ public class Negreira implements IPlayer, IAuto {
             return evaluarEstat(s);
         }
         List<MoveNode> moviments = s.getMoves();
-
-        for (MoveNode moviment : moviments) {
-            List<Point> points_aux = obtenirPuntsAuxiliars(moviment);
-            System.out.println("Mida points_aux: " + points_aux.size());
-            for (Point punt : points_aux) {
-                System.out.println(punt.x + "," + punt.y);
-            }
+        List<List<Point>> camins = obtenirMoviments(moviments);
+        for (List<Point> cami : camins) {
             GameStatus aux = new GameStatus(s);
-            aux.movePiece(points_aux);
+            aux.movePiece(cami);
 
             valorHeuristic = maxValor(aux, depth - 1, alpha, beta);
             beta = Math.min(valorHeuristic, beta);
@@ -142,12 +136,10 @@ public class Negreira implements IPlayer, IAuto {
         }
 
         List<MoveNode> moviments = s.getMoves();
-
-        for (MoveNode moviment : moviments) {
-            List<Point> points_aux = obtenirPuntsAuxiliars(moviment);
-
+        List<List<Point>> camins = obtenirMoviments(moviments);
+        for (List<Point> cami : camins) {
             GameStatus aux = new GameStatus(s);
-            aux.movePiece(points_aux);
+            aux.movePiece(cami);
 
             valorHeuristic = minValor(aux, depth - 1, alpha, beta);
             alpha = Math.max(valorHeuristic, alpha);
@@ -158,6 +150,33 @@ public class Negreira implements IPlayer, IAuto {
         }
 
         return valorHeuristic;
+    }
+
+    private List<List<Point>> obtenirMoviments(List<MoveNode> moviments) {
+        List<List<Point>> resultats = new ArrayList<>();
+
+        for (MoveNode moviment : moviments) {
+            List<Point> cami = new ArrayList<>();
+            cami.add(moviment.getPoint());
+            obtenirMovimentsAuxiliars(moviment, cami, resultats);
+        }
+
+        return resultats;
+    }
+
+    private void obtenirMovimentsAuxiliars(MoveNode moviment, List<Point> cami, List<List<Point>> resultats) {
+        List<MoveNode> següentsMoviments = moviment.getChildren();
+        if (següentsMoviments.isEmpty()) {
+            // Afegir el camí al resultat si no hi ha més moviments possibles
+            resultats.add(new ArrayList<>(cami));
+            return;
+        }
+
+        for (MoveNode següentMoviment : següentsMoviments) {
+            cami.add(següentMoviment.getPoint());
+            obtenirMovimentsAuxiliars(següentMoviment, cami, resultats);
+            cami.remove(cami.size() - 1);  // Desfer l'últim moviment per explorar altres opcions
+        }
     }
 
     private List<Point> obtenirPuntsAuxiliars(MoveNode moviment) {
