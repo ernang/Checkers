@@ -27,8 +27,8 @@ public class Game {
                 IPlayer player1 = new MickeyLaRata("Mickey", 2);
                 //IPlayer player2 = new OnePiecePlayer(1);
                 //IPlayer player1 = new RandomPlayer("Kamikaze 1");
-                //IPlayer player2 = new RandomPlayer("Kamikaze 2");
-                IPlayer player2 = new HumanPlayer("Ernest!");
+                IPlayer player2 = new RandomPlayer("Kamikaze 2");
+                //IPlayer player2 = new HumanPlayer("Ernest!");
 
                 new Board(player1, player2, 1, false);
             }

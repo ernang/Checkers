@@ -27,7 +27,7 @@ public class MickeyLaRata implements IPlayer, IAuto {
     private PlayerType jugadorMinim;
     private int profunditat = 4;
     private List<Point> millorJugada = new ArrayList<>();
-    private int calls = 0;
+    private int nodesExplorats = 0;
 
     /**
      * Constructor de la classe Negreira.
@@ -58,11 +58,7 @@ public class MickeyLaRata implements IPlayer, IAuto {
     @Override
     public PlayerMove move(GameStatus s) {
         List<Point> ll = miniMax(s);
-        for (Point point : ll) {
-            System.out.println("Punt -> " + point.toString());
-        }
-        System.out.println("----------------------------");
-        return new PlayerMove(ll, calls, calls, SearchType.MINIMAX);
+        return new PlayerMove(ll, nodesExplorats, profunditat, SearchType.MINIMAX);
     }
 
     /**
@@ -76,7 +72,7 @@ public class MickeyLaRata implements IPlayer, IAuto {
         List<List<Point>> punts = obtenirMoviments(llistaMoviments);
         List<Point> points = new ArrayList<>();
         int heuristicaActual = -20000, alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
-        for (List<Point>moviment : punts) {
+        for (List<Point> moviment : punts) {
 
             GameStatus aux = new GameStatus(s);
             aux.movePiece(moviment);
@@ -85,9 +81,7 @@ public class MickeyLaRata implements IPlayer, IAuto {
 
             if (valorHeuristic > heuristicaActual) {
                 heuristicaActual = valorHeuristic;
-            }
-
-            if (points.size() < moviment.size()) {
+                millorJugada = moviment;
                 points = moviment;
             }
 
@@ -98,7 +92,6 @@ public class MickeyLaRata implements IPlayer, IAuto {
     }
 
     private int minValor(GameStatus s, int depth, int alpha, int beta) {
-        calls++;
         int valorHeuristic = 10000;
         if (s.isGameOver() && s.GetWinner() == jugadorMaxim) {
             return valorHeuristic;
@@ -180,6 +173,8 @@ public class MickeyLaRata implements IPlayer, IAuto {
     }
 
     private int evaluarEstat(GameStatus s) {
+        nodesExplorats += 1;
+        
         return 0;
     }
 
