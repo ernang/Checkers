@@ -3,7 +3,7 @@ package edu.upc.epsevg.prop.checkers;
 import edu.upc.epsevg.prop.checkers.players.HumanPlayer;
 import edu.upc.epsevg.prop.checkers.players.RandomPlayer;
 import edu.upc.epsevg.prop.checkers.IPlayer;
-import edu.upc.epsevg.prop.checkers.players.Negreira;
+import edu.upc.epsevg.prop.checkers.players.MickeyLaRata;
 import edu.upc.epsevg.prop.checkers.players.OnePiecePlayer;
 
 import javax.swing.SwingUtilities;
@@ -24,10 +24,11 @@ public class Game {
             @Override
             public void run() {
 
-                IPlayer player1 = new Negreira("Mickey", 8);
-                IPlayer player2 = new OnePiecePlayer(1);
+                IPlayer player1 = new MickeyLaRata("Mickey", 2);
+                //IPlayer player2 = new OnePiecePlayer(1);
                 //IPlayer player1 = new RandomPlayer("Kamikaze 1");
-                //IPlayer player2 = new RandomPlayer("Kamikaze 2");
+                IPlayer player2 = new RandomPlayer("Kamikaze 2");
+                //IPlayer player2 = new HumanPlayer("Ernest!");
 
                 new Board(player1, player2, 1, false);
             }
