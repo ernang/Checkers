@@ -1,5 +1,6 @@
 package edu.upc.epsevg.prop.checkers.players;
 
+import edu.upc.epsevg.prop.checkers.CellType;
 import edu.upc.epsevg.prop.checkers.GameStatus;
 import edu.upc.epsevg.prop.checkers.IAuto;
 import edu.upc.epsevg.prop.checkers.IPlayer;
@@ -13,16 +14,20 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * La classe Negreira implementa un jugador que utilitza l'algorisme MiniMax per
- * decidir el seu pròxim moviment en el joc Checkers. Aquesta classe implementa
- * les interfícies IPlayer i IAuto.
+ * Estratègia de jugador automàtic que implementa l'algorisme MiniMax per a les
+ * dames. El jugador busca la millor jugada possible tenint en compte una
+ * heurística específica. Les opcions de moviment es generen fins a una
+ * determinada profunditat de l'arbre de cerca. Es pot especificar la
+ * profunditat en el constructor.
  *
- * @author Ernest
- * @author Naïm
+ * @author Ernest Anguera Aixalà
+ * @author Naïm Barba Morilla
+ *
+ * @version 1.0
  */
 public class MickeyLaRata implements IPlayer, IAuto {
 
-    private String name;
+    private String name = "Mickey La Rata";
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
     private int profunditat = 4;
@@ -30,13 +35,12 @@ public class MickeyLaRata implements IPlayer, IAuto {
     private int nodesExplorats = 0;
 
     /**
-     * Constructor de la classe Negreira.
+     * Constructor de la classe MickeyLaRata.
      *
-     * @param name El nom del jugador.
      * @param profunditat La profunditat màxima de l'arbre de cerca.
+     * @throws RuntimeException Si la profunditat és menor que 1.
      */
-    public MickeyLaRata(String name, int profunditat) {
-        this.name = name;
+    public MickeyLaRata(int profunditat) {
         this.profunditat = profunditat;
         if (profunditat < 1) {
             throw new RuntimeException("La profunditat ha de ser més gran o igual a 1.");
@@ -53,16 +57,18 @@ public class MickeyLaRata implements IPlayer, IAuto {
      * ha de posar.
      *
      * @param s Tauler i estat actual de joc.
-     * @return el moviment que fa el jugador.
+     * @return El moviment que fa el jugador.
      */
     @Override
     public PlayerMove move(GameStatus s) {
+        jugadorMaxim = s.getCurrentPlayer();
+        jugadorMinim = PlayerType.opposite(jugadorMaxim);
         List<Point> ll = miniMax(s);
         return new PlayerMove(ll, nodesExplorats, profunditat, SearchType.MINIMAX);
     }
-
+    
     /**
-     * Implementació de l'algorisme MiniMax.
+     * Implementació de l'algorisme MiniMax per determinar el millor moviment possible.
      *
      * @param s L'estat actual del joc.
      * @return Una llista de punts que representa el millor moviment.
@@ -174,8 +180,63 @@ public class MickeyLaRata implements IPlayer, IAuto {
 
     private int evaluarEstat(GameStatus s) {
         nodesExplorats += 1;
-        
-        return 0;
+        int heuristica = 0;
+        int backRowPieces = 0;
+        int middleBoxPieces = 0;
+        int middleRowPieces = 0;
+
+        for (int i = 0; i < s.getSize(); ++i) {
+            for (int j = 0; j < s.getSize(); ++j) {
+                CellType casella = s.getPos(i, j);
+                if (jugadorMaxim == PlayerType.PLAYER1) {
+                    if (casella == CellType.P1) {
+                        if (casella == CellType.P1Q) {
+                            heuristica += 7;
+                        } else {
+                            heuristica += 5;
+                        }
+                        // Cuenta las piezas en la última fila
+                        if (i == 0 || i == s.getSize() - 1) {
+                            backRowPieces++;
+                        }
+                        // Cuenta las piezas en las 4 columnas del medio de las 2 filas del medio
+                        if ((i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) && (j >= s.getSize() / 2 - 2 && j <= s.getSize() / 2 + 1)) {
+                            middleBoxPieces++;
+                        } // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
+                        else if (i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) {
+                            middleRowPieces++;
+                        }
+                    }
+                } else {
+                    if (casella == CellType.P2) {
+                        if (casella == CellType.P2Q) {
+                            heuristica += 7;
+                        } else {
+                            heuristica += 5;
+                        }
+                        // Cuenta las piezas en la última fila
+                        if (i == 0 || i == s.getSize() - 1) {
+                            backRowPieces++;
+                        }
+                        // Cuenta las piezas en las 4 columnas del medio de las 2 filas del medio
+                        if ((i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) && (j >= s.getSize() / 2 - 2 && j <= s.getSize() / 2 + 1)) {
+                            middleBoxPieces++;
+                        } // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
+                        else if (i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) {
+                            middleRowPieces++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Ajusta la heurística según tus necesidades
+        heuristica += backRowPieces * 4;
+        heuristica += middleBoxPieces * 3;
+        heuristica += middleRowPieces * 1;
+
+        return heuristica;
+
     }
 
     /**
