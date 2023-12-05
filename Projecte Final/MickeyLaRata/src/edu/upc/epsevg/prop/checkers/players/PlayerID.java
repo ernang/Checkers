@@ -10,15 +10,16 @@ import edu.upc.epsevg.prop.checkers.PlayerType;
 import edu.upc.epsevg.prop.checkers.SearchType;
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 /**
- * Estratègia de jugador automàtic que implementa l'algorisme MiniMax Iterative Deepening Search per a les
- * dames. El jugador busca la millor jugada possible tenint en compte una
- * heurística específica. Les opcions de moviment es generen fins a una
- * determinada profunditat de l'arbre de cerca. Es pot especificar la
- * profunditat en el constructor.
+ * Estratègia de jugador automàtic que implementa l'algorisme MiniMax Iterative
+ * Deepening Search per a les dames. El jugador busca la millor jugada possible
+ * tenint en compte una heurística específica. Les opcions de moviment es
+ * generen fins a una determinada profunditat de l'arbre de cerca. Es pot
+ * especificar la profunditat en el constructor.
  *
  * @author Ernest Anguera Aixalà
  * @author Naïm Barba Morilla
@@ -30,26 +31,45 @@ public class PlayerID implements IPlayer, IAuto {
     private String name = "Mickey La Rata";
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
-    private int profunditat = 4;
-    private List<Point> millorJugada = new ArrayList<>();
+    private int profunditat = 0;
     private int nodesExplorats = 0;
+    private boolean timeout = false;
+    private int profMax = 64;
+
+    private class Pair {
+
+        List<Point> llista;
+        int value;
+
+        public Pair(List<Point> mov, int h) {
+            this.llista = mov;
+            this.value = h;
+        }
+
+        private Pair() {
+            this.llista = new ArrayList<>();
+            this.value = -20000;
+        }
+
+        public List<Point> getLlista() {
+            return llista;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
 
     /**
      * Constructor de la classe MickeyLaRata.
      *
-     * @param profunditat La profunditat màxima de l'arbre de cerca.
-     * @throws RuntimeException Si la profunditat és menor que 1.
      */
-    public PlayerID(int profunditat) {
-        this.profunditat = profunditat;
-        if (profunditat < 1) {
-            throw new RuntimeException("La profunditat ha de ser més gran o igual a 1.");
-        }
+    public PlayerID() {
     }
 
     @Override
     public void timeout() {
-        // Nothing to do! I'm so fast, I never timeout 8-)
+        timeout = true;
     }
 
     /**
@@ -63,8 +83,23 @@ public class PlayerID implements IPlayer, IAuto {
     public PlayerMove move(GameStatus s) {
         jugadorMaxim = s.getCurrentPlayer();
         jugadorMinim = PlayerType.opposite(jugadorMaxim);
-        List<Point> ll = miniMax(s);
+        timeout = false;
+        List<Point> ll = ids(s);
         return new PlayerMove(ll, nodesExplorats, profunditat, SearchType.MINIMAX);
+    }
+
+    private List<Point> ids(GameStatus s) {
+        Pair millorObtingut = new Pair();
+        int depth = 1;
+        nodesExplorats = 0;
+        while (!timeout && depth < profMax) {
+            Pair moviment = miniMax(s, depth);
+            if (moviment.getValue() > millorObtingut.getValue()) {
+                millorObtingut = moviment;
+            }
+            depth++;
+        }
+        return millorObtingut.getLlista();
     }
 
     /**
@@ -74,46 +109,56 @@ public class PlayerID implements IPlayer, IAuto {
      * @param s L'estat actual del joc.
      * @return Una llista de punts que representa el millor moviment.
      */
-    private List<Point> miniMax(GameStatus s) {
-        List<MoveNode> llistaMoviments = s.getMoves();
-        List<List<Point>> punts = obtenirMoviments(llistaMoviments);
-        List<Point> points = new ArrayList<>();
+    private Pair miniMax(GameStatus s, int depth) {
         int heuristicaActual = -20000, alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
-        for (List<Point> moviment : punts) {
-
+        List<MoveNode> llistaMoviments = s.getMoves();
+        List<List<Point>> moviments = obtenirMoviments(llistaMoviments);
+        Collections.sort(moviments, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
+        List<Point> points = new ArrayList<>();
+        for (List<Point> moviment : moviments) {
+            if (timeout) {
+                break;
+            }
             GameStatus aux = new GameStatus(s);
             aux.movePiece(moviment);
 
-            int valorHeuristic = minValor(aux, profunditat - 1, alpha, beta);
+            int valorHeuristic = minValor(aux, depth - 1, alpha, beta);
 
             if (valorHeuristic > heuristicaActual) {
                 heuristicaActual = valorHeuristic;
-                millorJugada = moviment;
                 points = moviment;
             }
-
             alpha = Math.max(alpha, heuristicaActual);
         }
 
-        return points;
+        return new Pair(points, heuristicaActual);
     }
 
     private int minValor(GameStatus s, int depth, int alpha, int beta) {
         int valorHeuristic = 10000;
-        if (s.isGameOver() && s.GetWinner() == jugadorMaxim) {
-            return valorHeuristic;
+        if (s.isGameOver()) {
+            if (s.GetWinner() == jugadorMaxim) {
+                return valorHeuristic;
+            }
+            if (s.GetWinner() == null) {
+                return 0;
+            }
         }
 
-        if (depth == 0 || !s.currentPlayerCanMove()) {
+        if (depth == 0) {
             return evaluarEstat(s);
         }
         List<MoveNode> moviments = s.getMoves();
         List<List<Point>> camins = obtenirMoviments(moviments);
+        Collections.sort(camins, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
         for (List<Point> cami : camins) {
+            if (timeout) {
+                break;
+            }
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
-
-            valorHeuristic = maxValor(aux, depth - 1, alpha, beta);
+            int heuristicaActual = maxValor(aux, depth - 1, alpha, beta);
+            valorHeuristic = Math.min(valorHeuristic, heuristicaActual);
             beta = Math.min(valorHeuristic, beta);
 
             if (alpha >= beta) {
@@ -126,22 +171,31 @@ public class PlayerID implements IPlayer, IAuto {
 
     private int maxValor(GameStatus s, int depth, int alpha, int beta) {
         int valorHeuristic = -10000;
-
-        if (s.isGameOver() && s.GetWinner() == jugadorMinim) {
-            return valorHeuristic;
+        if (s.isGameOver()) {
+            if (s.GetWinner() == jugadorMinim) {
+                return valorHeuristic;
+            }
+            if (s.GetWinner() == null) {
+                return 0;
+            }
         }
-
-        if (depth == 0 || !s.currentPlayerCanMove()) {
+        if (depth == 0) {
             return evaluarEstat(s);
         }
 
         List<MoveNode> moviments = s.getMoves();
         List<List<Point>> camins = obtenirMoviments(moviments);
+        Collections.sort(camins, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
         for (List<Point> cami : camins) {
+            if (timeout) {
+                break;
+            }
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
 
-            valorHeuristic = minValor(aux, depth - 1, alpha, beta);
+            int heuristicaActual = minValor(aux, depth - 1, alpha, beta);
+            valorHeuristic = Math.max(valorHeuristic, heuristicaActual);
+            
             alpha = Math.max(valorHeuristic, alpha);
 
             if (alpha >= beta) {
@@ -154,8 +208,10 @@ public class PlayerID implements IPlayer, IAuto {
 
     private List<List<Point>> obtenirMoviments(List<MoveNode> moviments) {
         List<List<Point>> resultats = new ArrayList<>();
-
         for (MoveNode moviment : moviments) {
+            if (timeout) {
+                break;
+            }
             List<Point> cami = new ArrayList<>();
             cami.add(moviment.getPoint());
             obtenirMovimentsAuxiliars(moviment, cami, resultats);
@@ -166,6 +222,9 @@ public class PlayerID implements IPlayer, IAuto {
 
     private void obtenirMovimentsAuxiliars(MoveNode moviment, List<Point> cami, List<List<Point>> resultats) {
         List<MoveNode> següentsMoviments = moviment.getChildren();
+        if (timeout) {
+            return;
+        }
         if (següentsMoviments.isEmpty()) {
             // Afegir el camí al resultat si no hi ha més moviments possibles
             resultats.add(new ArrayList<>(cami));
@@ -180,54 +239,46 @@ public class PlayerID implements IPlayer, IAuto {
     }
 
     private int evaluarEstat(GameStatus s) {
-        nodesExplorats += 1;
+        nodesExplorats++;
+        if (timeout) {
+            return 0;
+        }
+        return evaluarEstatAux(s, jugadorMaxim) - evaluarEstatAux(s, jugadorMinim);
+    }
+
+    private int evaluarEstatAux(GameStatus s, PlayerType jugador) {
         int heuristica = 0;
         int backRowPieces = 0;
         int middleBoxPieces = 0;
         int middleRowPieces = 0;
+        if (timeout) {
+            return 0;
+        }
 
         for (int i = 0; i < s.getSize(); ++i) {
             for (int j = 0; j < s.getSize(); ++j) {
+                Point p = new Point(i, j);
                 CellType casella = s.getPos(i, j);
-                if (jugadorMaxim == PlayerType.PLAYER1) {
-                    if (casella == CellType.P1) {
-                        if (casella == CellType.P1Q) {
-                            heuristica += 7;
-                        } else {
-                            heuristica += 5;
-                        }
-                        // Cuenta las piezas en la última fila
-                        if (i == 0 || i == s.getSize() - 1) {
-                            backRowPieces++;
-                        }
-                        // Cuenta las piezas en las 4 columnas del medio de las 2 filas del medio
-                        if ((i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) && (j >= s.getSize() / 2 - 2 && j <= s.getSize() / 2 + 1)) {
-                            middleBoxPieces++;
-                        } // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
-                        else if (i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) {
-                            middleRowPieces++;
-                        }
+                MoveNode n = s.getMoves(p, jugador);
+                if (casella == (jugador == PlayerType.PLAYER1 ? CellType.P1 : CellType.P2)) {
+                    if (casella.isQueen()) {
+                        heuristica += 7;
+                    } else {
+                        heuristica += 5;
                     }
-                } else {
-                    if (casella == CellType.P2) {
-                        if (casella == CellType.P2Q) {
-                            heuristica += 7;
-                        } else {
-                            heuristica += 5;
-                        }
-                        // Cuenta las piezas en la última fila
-                        if (i == 0 || i == s.getSize() - 1) {
-                            backRowPieces++;
-                        }
-                        // Cuenta las piezas en las 4 columnas del medio de las 2 filas del medio
-                        if ((i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) && (j >= s.getSize() / 2 - 2 && j <= s.getSize() / 2 + 1)) {
-                            middleBoxPieces++;
-                        } // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
-                        else if (i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) {
-                            middleRowPieces++;
-                        }
+                    // Cuenta las piezas en la última fila
+                    if (i == 0 || i == s.getSize() - 1) {
+                        backRowPieces++;
+                    }
+                    // Cuenta las piezas en las 4 columnas del medio de las 2 filas del medio
+                    if ((i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) && (j >= s.getSize() / 2 - 2 && j <= s.getSize() / 2 + 1)) {
+                        middleBoxPieces++;
+                    } // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
+                    else if (i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) {
+                        middleRowPieces++;
                     }
                 }
+
             }
         }
 
@@ -235,7 +286,7 @@ public class PlayerID implements IPlayer, IAuto {
         heuristica += backRowPieces * 4;
         heuristica += middleBoxPieces * 3;
         heuristica += middleRowPieces * 1;
-        return heuristica + s.getScore(jugadorMaxim) - 2*s.getScore(jugadorMinim);
+        return heuristica;
     }
 
     /**

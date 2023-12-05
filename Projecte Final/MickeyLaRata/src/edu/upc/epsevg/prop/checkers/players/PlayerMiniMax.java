@@ -77,10 +77,10 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      * @return Una llista de punts que representa el millor moviment.
      */
     private List<Point> miniMax(GameStatus s) {
+        int heuristicaActual = -20000, alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
         List<MoveNode> llistaMoviments = s.getMoves();
         List<List<Point>> moviments = obtenirMoviments(llistaMoviments);
         List<Point> points = new ArrayList<>();
-        int heuristicaActual = -20000, alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
         Collections.sort(moviments, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
         for (List<Point> moviment : moviments) {
 
@@ -112,7 +112,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             }
         }
 
-        if (depth == 0 || !s.currentPlayerCanMove()) {
+        if (depth == 0) {
             return evaluarEstat(s);
         }
         List<MoveNode> moviments = s.getMoves();
@@ -122,8 +122,8 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
 
-            int valorHeuristicAux = maxValor(aux, depth - 1, alpha, beta);
-            valorHeuristic = Math.min(valorHeuristic, valorHeuristicAux);
+            int heuristicaActual = maxValor(aux, depth - 1, alpha, beta);
+            valorHeuristic = Math.min(valorHeuristic, heuristicaActual);
             beta = Math.min(valorHeuristic, beta);
 
             if (alpha >= beta) {
@@ -146,7 +146,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             }
         }
 
-        if (depth == 0 || !s.currentPlayerCanMove()) {
+        if (depth == 0) {
             return evaluarEstat(s);
         }
 
@@ -157,8 +157,8 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
 
-            int valorHeuristicAux = minValor(aux, depth - 1, alpha, beta);
-            valorHeuristic = Math.max(valorHeuristic, valorHeuristicAux);
+            int heuristicaActual = minValor(aux, depth - 1, alpha, beta);
+            valorHeuristic = Math.max(valorHeuristic, heuristicaActual);
             alpha = Math.max(valorHeuristic, alpha);
 
             if (alpha >= beta) {
@@ -197,11 +197,11 @@ public class PlayerMiniMax implements IPlayer, IAuto {
     }
 
     private int evaluarEstat(GameStatus s) {
+        nodesExplorats++;
         return evaluarEstatAux(s, jugadorMaxim) - evaluarEstatAux(s, jugadorMinim);
     }
 
     private int evaluarEstatAux(GameStatus s, PlayerType jugador) {
-        nodesExplorats += 1;
         int heuristica = 0;
         int backRowPieces = 0;
         int middleBoxPieces = 0;
@@ -209,7 +209,9 @@ public class PlayerMiniMax implements IPlayer, IAuto {
 
         for (int i = 0; i < s.getSize(); ++i) {
             for (int j = 0; j < s.getSize(); ++j) {
+                Point p = new Point(i, j);
                 CellType casella = s.getPos(i, j);
+                MoveNode n = s.getMoves(p, jugador);
                 if (casella == (jugador == PlayerType.PLAYER1 ? CellType.P1 : CellType.P2)) {
                     if (casella.isQueen()) {
                         heuristica += 7;

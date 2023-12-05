@@ -1,8 +1,8 @@
 package edu.upc.epsevg.prop.checkers;
 
-
 import edu.upc.epsevg.prop.checkers.players.PlayerMiniMax;
 import edu.upc.epsevg.prop.checkers.players.OnePiecePlayer;
+import edu.upc.epsevg.prop.checkers.players.PlayerID;
 import edu.upc.epsevg.prop.checkers.players.RandomPlayer;
 import java.lang.ref.WeakReference;
 
@@ -12,11 +12,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/** 
-* 
-* @author bernat
-* 
-*/
+/**
+ *
+ * @author bernat
+ *
+ */
 public class HeadlessGame {
 
     private IPlayer players[];
@@ -26,9 +26,15 @@ public class HeadlessGame {
 
     public static void main(String[] args) {
 
-        IPlayer player1 = new OnePiecePlayer(1);//GB
-        IPlayer player2 = new PlayerMiniMax(8);
-        //IPlayer player1 = new RandomPlayer("Kamikaze 2");
+        //IPlayer player1 = new OnePiecePlayer(1);//GB
+        //IPlayer player1 = new RandomPlayer("Kamikaze 1");
+        IPlayer player1 = new PlayerMiniMax(8);
+        //IPlayer player1 = new PlayerID();
+
+        //IPlayer player2 = new OnePiecePlayer(1);//GB
+        IPlayer player2 = new RandomPlayer("Kamikaze 2");
+        //IPlayer player2 = new PlayerMiniMax(8);
+        //IPlayer player2 = new PlayerID();
         HeadlessGame game = new HeadlessGame(player1, player2, 1/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
@@ -55,6 +61,7 @@ public class HeadlessGame {
     }
 
     private class Result {
+
         public boolean ok;
     }
 
@@ -72,8 +79,8 @@ public class HeadlessGame {
                 PlayerMove m = null;
                 try {
                     m = players[cp == PlayerType.PLAYER1 ? 0 : 1].move(new GameStatus(status));
-                } catch(Exception ex) {
-                    System.out.println("Excepció descontrolada al player:"+cp.name());
+                } catch (Exception ex) {
+                    System.out.println("Excepció descontrolada al player:" + cp.name());
                     ex.printStackTrace();
                 }
                 if (m != null) {
@@ -81,7 +88,7 @@ public class HeadlessGame {
                 } else {
                     status.forceLoser();
                 }
-                System.out.print(cp==PlayerType.PLAYER1?"1":"2");
+                System.out.print(cp == PlayerType.PLAYER1 ? "1" : "2");
                 r.ok = true;
                 semaphore.release();
             });
@@ -102,7 +109,7 @@ public class HeadlessGame {
             try {
                 if (!semaphore.tryAcquire(1, timeout * 1000 + WAIT_EXTRA_TIME, TimeUnit.MILLISECONDS)) {
 
-                    System.out.println("Espera il·legal ! Player trampós:"+cp.name());
+                    System.out.println("Espera il·legal ! Player trampós:" + cp.name());
                     //throw new RuntimeException("Jugador trampós ! Espera il·legal !");
                     // Som millors persones deixant que el jugador il·legal continui jugant...
                     semaphore.acquire();
@@ -113,7 +120,7 @@ public class HeadlessGame {
             }
             // Netegem la memòria (for free!)
             gc();
-            
+
         }
         return status.winnerPlayer;
     }
@@ -133,9 +140,9 @@ public class HeadlessGame {
 
         @Override
         public String toString() {
-            String res = "\n ================================================================="+
-                         "\n ================       RESULTS       ============================"+
-                         "\n =================================================================\n";
+            String res = "\n ================================================================="
+                    + "\n ================       RESULTS       ============================"
+                    + "\n =================================================================\n";
             int wins1 = 0, ties1 = 0, loose1 = 0;
             for (PlayerType c : results) {
                 if (null == c) {
@@ -171,7 +178,6 @@ public class HeadlessGame {
         }
     }
 
-    
     /**
      * This method guarantees that garbage collection is done unlike
      * <code>{@link System#gc()}</code>
@@ -185,4 +191,3 @@ public class HeadlessGame {
         }
     }
 }
-    
