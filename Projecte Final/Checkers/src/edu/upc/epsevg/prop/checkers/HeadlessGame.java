@@ -1,7 +1,7 @@
 package edu.upc.epsevg.prop.checkers;
 
 
-import edu.upc.epsevg.prop.checkers.players.MickeyLaRata;
+import edu.upc.epsevg.prop.checkers.players.PlayerMiniMax;
 import edu.upc.epsevg.prop.checkers.players.OnePiecePlayer;
 import edu.upc.epsevg.prop.checkers.players.RandomPlayer;
 import java.lang.ref.WeakReference;
@@ -12,10 +12,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author bernat
- */
+/** 
+* 
+* @author bernat
+* 
+*/
 public class HeadlessGame {
 
     private IPlayer players[];
@@ -25,10 +26,9 @@ public class HeadlessGame {
 
     public static void main(String[] args) {
 
-        //IPlayer player1 = new OnePiecePlayer(1);//GB
-        IPlayer player2 = new MickeyLaRata(8);
-        IPlayer player1 = new RandomPlayer("Kamikaze 2");
-
+        IPlayer player1 = new OnePiecePlayer(1);//GB
+        IPlayer player2 = new PlayerMiniMax(8);
+        //IPlayer player1 = new RandomPlayer("Kamikaze 2");
         HeadlessGame game = new HeadlessGame(player1, player2, 1/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);

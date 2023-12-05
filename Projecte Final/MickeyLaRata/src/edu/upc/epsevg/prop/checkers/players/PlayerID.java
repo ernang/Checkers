@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Estratègia de jugador automàtic que implementa l'algorisme MiniMax per a les
+ * Estratègia de jugador automàtic que implementa l'algorisme MiniMax Iterative Deepening Search per a les
  * dames. El jugador busca la millor jugada possible tenint en compte una
  * heurística específica. Les opcions de moviment es generen fins a una
  * determinada profunditat de l'arbre de cerca. Es pot especificar la
@@ -25,7 +25,7 @@ import java.util.Random;
  *
  * @version 1.0
  */
-public class MickeyLaRata implements IPlayer, IAuto {
+public class PlayerID implements IPlayer, IAuto {
 
     private String name = "Mickey La Rata";
     private PlayerType jugadorMaxim;
@@ -40,7 +40,7 @@ public class MickeyLaRata implements IPlayer, IAuto {
      * @param profunditat La profunditat màxima de l'arbre de cerca.
      * @throws RuntimeException Si la profunditat és menor que 1.
      */
-    public MickeyLaRata(int profunditat) {
+    public PlayerID(int profunditat) {
         this.profunditat = profunditat;
         if (profunditat < 1) {
             throw new RuntimeException("La profunditat ha de ser més gran o igual a 1.");
@@ -66,9 +66,10 @@ public class MickeyLaRata implements IPlayer, IAuto {
         List<Point> ll = miniMax(s);
         return new PlayerMove(ll, nodesExplorats, profunditat, SearchType.MINIMAX);
     }
-    
+
     /**
-     * Implementació de l'algorisme MiniMax per determinar el millor moviment possible.
+     * Implementació de l'algorisme MiniMax per determinar el millor moviment
+     * possible.
      *
      * @param s L'estat actual del joc.
      * @return Una llista de punts que representa el millor moviment.
@@ -234,9 +235,7 @@ public class MickeyLaRata implements IPlayer, IAuto {
         heuristica += backRowPieces * 4;
         heuristica += middleBoxPieces * 3;
         heuristica += middleRowPieces * 1;
-
-        return heuristica;
-
+        return heuristica + s.getScore(jugadorMaxim) - 2*s.getScore(jugadorMinim);
     }
 
     /**
