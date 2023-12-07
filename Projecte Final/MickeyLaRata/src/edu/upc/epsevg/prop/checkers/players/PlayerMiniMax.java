@@ -33,7 +33,6 @@ public class PlayerMiniMax implements IPlayer, IAuto {
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
     private int profunditat = 4;
-    private List<Point> millorJugada = new ArrayList<>();
     private int nodesExplorats = 0;
 
     /**
@@ -78,21 +77,19 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      */
     private List<Point> miniMax(GameStatus s) {
         int heuristicaActual = -20000, alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
-        List<MoveNode> llistaMoviments = s.getMoves();
-        List<List<Point>> moviments = obtenirMoviments(llistaMoviments);
+
+        List<List<Point>> camins = obtenirMoviments(s.getMoves());
         List<Point> points = new ArrayList<>();
-        Collections.sort(moviments, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
-        for (List<Point> moviment : moviments) {
+        for (List<Point> cami : camins) {
 
             GameStatus aux = new GameStatus(s);
-            aux.movePiece(moviment);
+            aux.movePiece(cami);
 
             int valorHeuristic = minValor(aux, profunditat - 1, alpha, beta);
 
             if (valorHeuristic > heuristicaActual) {
                 heuristicaActual = valorHeuristic;
-                millorJugada = moviment;
-                points = moviment;
+                points = cami;
             }
 
             alpha = Math.max(alpha, heuristicaActual);
@@ -115,9 +112,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         if (depth == 0) {
             return evaluarEstat(s);
         }
-        List<MoveNode> moviments = s.getMoves();
-        List<List<Point>> camins = obtenirMoviments(moviments);
-        Collections.sort(camins, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
+        List<List<Point>> camins = obtenirMoviments(s.getMoves());
         for (List<Point> cami : camins) {
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
@@ -150,9 +145,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             return evaluarEstat(s);
         }
 
-        List<MoveNode> moviments = s.getMoves();
-        List<List<Point>> camins = obtenirMoviments(moviments);
-        Collections.sort(camins, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
+        List<List<Point>> camins = obtenirMoviments(s.getMoves());
         for (List<Point> cami : camins) {
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
@@ -165,7 +158,6 @@ public class PlayerMiniMax implements IPlayer, IAuto {
                 break;
             }
         }
-
         return valorHeuristic;
     }
 
@@ -177,7 +169,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             cami.add(moviment.getPoint());
             obtenirMovimentsAuxiliars(moviment, cami, resultats);
         }
-
+        resultats.sort(Comparator.comparingInt((List<Point> points) -> points.size()).reversed());
         return resultats;
     }
 
@@ -231,31 +223,17 @@ public class PlayerMiniMax implements IPlayer, IAuto {
                         middleRowPieces++; // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
                     }
                     // Cuenta las piezas que pueden ser tomadas por el oponente en el próximo turno
-                    if (jugador == PlayerType.PLAYER1) {
-                        if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
-                            if (s.getPos(i + 1, j - 1).getPlayer() == PlayerType.PLAYER2 && s.getPos(i - 1, j + 1) == CellType.EMPTY) {
-                                vulnerablePieces++;
-                            } else if (s.getPos(i + 1, j + 1).getPlayer() == PlayerType.PLAYER2 && s.getPos(i - 1, j - 1) == CellType.EMPTY) {
-                                vulnerablePieces++;
-                            } else {
-                                safePieces++;
-                            }
+                    if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
+                        PlayerType opponentPlayer = (jugador == PlayerType.PLAYER1) ? PlayerType.PLAYER2 : PlayerType.PLAYER1;
+
+                        if ((s.getPos(i + 1, j - 1).getPlayer() == opponentPlayer && s.getPos(i - 1, j + 1) == CellType.EMPTY)
+                                || (s.getPos(i + 1, j + 1).getPlayer() == opponentPlayer && s.getPos(i - 1, j - 1) == CellType.EMPTY)) {
+                            vulnerablePieces++;
+                        } else {
+                            safePieces++;
                         }
-
-                    } else {
-
-                        if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
-                            if (s.getPos(i - 1, j + 1).getPlayer() == PlayerType.PLAYER1 && s.getPos(i + 1, j - 1) == CellType.EMPTY) {
-                                vulnerablePieces++;
-                            } else if (s.getPos(i - 1, j - 1).getPlayer() == PlayerType.PLAYER1 && s.getPos(i + 1, j + 1) == CellType.EMPTY) {
-                                vulnerablePieces++;
-                            } else {
-                                safePieces++;
-                            }
-
-                        }
-
                     }
+
                 } else if (casilla.getPlayer() != jugador) {
                     opponentPieces++;
                 }
@@ -264,24 +242,18 @@ public class PlayerMiniMax implements IPlayer, IAuto {
 
         // Ajusta la heurística según tus necesidades
         heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
-        heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
+        heuristica += kingPieces * 7; // Añade el bonus que quieras para las reinas
         if (opponentPieces <= 3) {
-            heuristica += pawnPieces * 0; // Añade el bonus que quieras para las piezas regulares
-            heuristica += kingPieces * 0; // Añade el bonus que quieras para las reinas
-            heuristica += backRowPieces * 0; // Añade el bonus que quieras para las piezas en la última fila
-            heuristica += safePieces * 0; // Añade el bonus que quieras para las piezas que no pueden ser tomadas hasta que las piezas detrás de ella (o ella misma) se muevan
-            heuristica += middleBoxPieces * 0;
-            heuristica += middleRowPieces * 0;
             heuristica -= vulnerablePieces * 10; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
 
         } else {
             heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
-            heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
+            heuristica += kingPieces * 9; // Añade el bonus que quieras para las reinas
             heuristica += backRowPieces * 4; // Añade el bonus que quieras para las piezas en la última fila
             heuristica += safePieces * 3; // Añade el bonus que quieras para las piezas que no pueden ser tomadas hasta que las piezas detrás de ella (o ella misma) se muevan
-            heuristica -= vulnerablePieces * -3; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
-            heuristica += middleBoxPieces * 2.5; // Añade el bonus que quieras para las piezas en las 4 columnas del medio de las 2 filas del medio
-            heuristica += middleRowPieces * 0.5; // Añade el bonus que quieras para las piezas en las 2 filas del medio pero no en las 4 columnas del medio
+            heuristica -= vulnerablePieces * 4; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
+            heuristica += middleBoxPieces * 3; // Añade el bonus que quieras para las piezas en las 4 columnas del medio de las 2 filas del medio
+            heuristica += middleRowPieces * 2; // Añade el bonus que quieras para las piezas en las 2 filas del medio pero no en las 4 columnas del medio
 
         }
 
