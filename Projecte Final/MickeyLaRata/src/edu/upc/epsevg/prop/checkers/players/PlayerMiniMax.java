@@ -33,6 +33,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
     private int profunditat = 4;
+    private List<Point> millorJugada = new ArrayList<>();
     private int nodesExplorats = 0;
 
     /**
@@ -62,11 +63,10 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      */
     @Override
     public PlayerMove move(GameStatus s) {
-        nodesExplorats = 0;
         jugadorMaxim = s.getCurrentPlayer();
         jugadorMinim = PlayerType.opposite(jugadorMaxim);
-        List<Point> moviment = miniMax(s);
-        return new PlayerMove(moviment, nodesExplorats, profunditat, SearchType.MINIMAX);
+        List<Point> ll = miniMax(s);
+        return new PlayerMove(ll, nodesExplorats, profunditat, SearchType.MINIMAX);
     }
 
     /**
@@ -77,165 +77,121 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      * @return Una llista de punts que representa el millor moviment.
      */
     private List<Point> miniMax(GameStatus s) {
-        // Inicialització de les variables
-        int heuristicaActual = -20000;  // Valor inicial de la heurística
-        int alpha = Integer.MIN_VALUE;   // Valor inicial d'alpha
-        int beta = Integer.MAX_VALUE;    // Valor inicial de beta
-
-        // Obtenir la llista de moviments convertits a punts
-        List<List<Point>> moviments = obtenirMoviments(s.getMoves());
-
-        // Llista que emmagatzemarà el millor moviment trobat
+        int heuristicaActual = -20000, alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
+        List<MoveNode> llistaMoviments = s.getMoves();
+        List<List<Point>> moviments = obtenirMoviments(llistaMoviments);
         List<Point> points = new ArrayList<>();
-
-        // Iterar a través dels moviments
+        Collections.sort(moviments, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
         for (List<Point> moviment : moviments) {
-            // Crear una còpia de l'estat del joc per simular el moviment
+
             GameStatus aux = new GameStatus(s);
             aux.movePiece(moviment);
 
-            // Calcular el valor heurístic del moviment
             int valorHeuristic = minValor(aux, profunditat - 1, alpha, beta);
 
-            // Actualitzar el millor moviment si es troba un valor heurístic millor
             if (valorHeuristic > heuristicaActual) {
                 heuristicaActual = valorHeuristic;
+                millorJugada = moviment;
                 points = moviment;
             }
 
-            // Actualitzar el valor d'alpha
             alpha = Math.max(alpha, heuristicaActual);
         }
 
-        // Retornar el millor moviment trobat
         return points;
     }
 
     private int minValor(GameStatus s, int depth, int alpha, int beta) {
-        // Valor heurístic inicial per a la funció min (MAX_INT)
         int valorHeuristic = 10000;
-
-        // Comprovar si la partida ha acabat
         if (s.isGameOver()) {
-            // Si el guanyador és el jugador màxim, retornar valor heurístic alt
             if (s.GetWinner() == jugadorMaxim) {
                 return valorHeuristic;
             }
-            // Si no hi ha guanyador, retornar 0 (empat)
             if (s.GetWinner() == null) {
                 return 0;
             }
         }
 
-        // Comprovar la profunditat màxima i retornar l'avaluació de l'estat actual
         if (depth == 0) {
             return evaluarEstat(s);
         }
-
-        // Obtindre la llista de moviments convertits a punts
-        List<List<Point>> camins = obtenirMoviments(s.getMoves());
-
-        // Iterar a través dels camins possibles
+        List<MoveNode> moviments = s.getMoves();
+        List<List<Point>> camins = obtenirMoviments(moviments);
+        Collections.sort(camins, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
         for (List<Point> cami : camins) {
-            // Crear una còpia de l'estat del joc per simular el moviment
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
 
-            // Calcular el valor heurístic per al jugador màxim
             int heuristicaActual = maxValor(aux, depth - 1, alpha, beta);
-
-            // Actualitzar el valor heurístic mínim
             valorHeuristic = Math.min(valorHeuristic, heuristicaActual);
-            // Actualitzar beta amb el valor heurístic mínim
             beta = Math.min(valorHeuristic, beta);
 
-            // Realitzar la poda alpha-beta
             if (alpha >= beta) {
                 break;
             }
         }
 
-        // Retornar el valor heurístic mínim trobat
         return valorHeuristic;
     }
 
     private int maxValor(GameStatus s, int depth, int alpha, int beta) {
-        // Valor heurístic inicial per a la funció max (MIN_INT)
         int valorHeuristic = -10000;
 
-        // Comprovar si la partida ha acabat
         if (s.isGameOver()) {
-            // Si el guanyador és el jugador mínim, retornar valor heurístic baix
             if (s.GetWinner() == jugadorMinim) {
                 return valorHeuristic;
             }
-            // Si no hi ha guanyador, retornar 0 (empat)
             if (s.GetWinner() == null) {
                 return 0;
             }
         }
 
-        // Comprovar la profunditat màxima i retornar l'avaluació de l'estat actual
         if (depth == 0) {
             return evaluarEstat(s);
         }
 
-        // Obtindre la llista de moviments convertits a punts
-        List<List<Point>> camins = obtenirMoviments(s.getMoves());
-
-        // Iterar a través dels camins possibles
+        List<MoveNode> moviments = s.getMoves();
+        List<List<Point>> camins = obtenirMoviments(moviments);
+        Collections.sort(camins, (list1, list2) -> Integer.compare(list1.size(), list2.size()));
         for (List<Point> cami : camins) {
-            // Crear una còpia de l'estat del joc per simular el moviment
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
 
-            // Calcular el valor heurístic per al jugador mínim
             int heuristicaActual = minValor(aux, depth - 1, alpha, beta);
-
-            // Actualitzar el valor heurístic màxim
             valorHeuristic = Math.max(valorHeuristic, heuristicaActual);
-            // Actualitzar alpha amb el valor heurístic màxim
             alpha = Math.max(valorHeuristic, alpha);
 
-            // Realitzar la poda alpha-beta
             if (alpha >= beta) {
                 break;
             }
         }
 
-        // Retornar el valor heurístic màxim trobat
         return valorHeuristic;
     }
 
     private List<List<Point>> obtenirMoviments(List<MoveNode> moviments) {
-        // Llista que emmagatzemarà els camins resultants
         List<List<Point>> resultats = new ArrayList<>();
 
-        // Iterar a través dels moviments
         for (MoveNode moviment : moviments) {
-            // Crear un nou camí que comença amb el punt del moviment actual
             List<Point> cami = new ArrayList<>();
             cami.add(moviment.getPoint());
-            // Cridar a la funció auxiliar per obtenir els altres punts del camí
             obtenirMovimentsAuxiliars(moviment, cami, resultats);
         }
 
-        // Retornar els camins resultants
-        resultats.sort(Comparator.comparingInt((List<Point> points) -> points.size()).reversed());
         return resultats;
     }
 
     private void obtenirMovimentsAuxiliars(MoveNode moviment, List<Point> cami, List<List<Point>> resultats) {
-        List<MoveNode> fills = moviment.getChildren();
-        if (fills.isEmpty()) {
+        List<MoveNode> següentsMoviments = moviment.getChildren();
+        if (següentsMoviments.isEmpty()) {
             // Afegir el camí al resultat si no hi ha més moviments possibles
             resultats.add(new ArrayList<>(cami));
             return;
         }
 
-        for (MoveNode fill : fills) {
-            cami.add(fill.getPoint());
-            obtenirMovimentsAuxiliars(fill, cami, resultats);
+        for (MoveNode següentMoviment : següentsMoviments) {
+            cami.add(següentMoviment.getPoint());
+            obtenirMovimentsAuxiliars(següentMoviment, cami, resultats);
             cami.remove(cami.size() - 1);  // Desfer l'últim moviment per explorar altres opcions
         }
     }
@@ -275,17 +231,31 @@ public class PlayerMiniMax implements IPlayer, IAuto {
                         middleRowPieces++; // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
                     }
                     // Cuenta las piezas que pueden ser tomadas por el oponente en el próximo turno
-                    if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
-                        PlayerType opponentPlayer = (jugador == PlayerType.PLAYER1) ? PlayerType.PLAYER2 : PlayerType.PLAYER1;
-
-                        if ((s.getPos(i + 1, j - 1).getPlayer() == opponentPlayer && s.getPos(i - 1, j + 1) == CellType.EMPTY)
-                                || (s.getPos(i + 1, j + 1).getPlayer() == opponentPlayer && s.getPos(i - 1, j - 1) == CellType.EMPTY)) {
-                            vulnerablePieces++;
-                        } else {
-                            safePieces++;
+                    if (jugador == PlayerType.PLAYER1) {
+                        if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
+                            if (s.getPos(i + 1, j - 1).getPlayer() == PlayerType.PLAYER2 && s.getPos(i - 1, j + 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else if (s.getPos(i + 1, j + 1).getPlayer() == PlayerType.PLAYER2 && s.getPos(i - 1, j - 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else {
+                                safePieces++;
+                            }
                         }
-                    }
 
+                    } else {
+
+                        if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
+                            if (s.getPos(i - 1, j + 1).getPlayer() == PlayerType.PLAYER1 && s.getPos(i + 1, j - 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else if (s.getPos(i - 1, j - 1).getPlayer() == PlayerType.PLAYER1 && s.getPos(i + 1, j + 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else {
+                                safePieces++;
+                            }
+
+                        }
+
+                    }
                 } else if (casilla.getPlayer() != jugador) {
                     opponentPieces++;
                 }
@@ -294,18 +264,24 @@ public class PlayerMiniMax implements IPlayer, IAuto {
 
         // Ajusta la heurística según tus necesidades
         heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
-        heuristica += kingPieces * 7; // Añade el bonus que quieras para las reinas
+        heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
         if (opponentPieces <= 3) {
+            heuristica += pawnPieces * 0; // Añade el bonus que quieras para las piezas regulares
+            heuristica += kingPieces * 0; // Añade el bonus que quieras para las reinas
+            heuristica += backRowPieces * 0; // Añade el bonus que quieras para las piezas en la última fila
+            heuristica += safePieces * 0; // Añade el bonus que quieras para las piezas que no pueden ser tomadas hasta que las piezas detrás de ella (o ella misma) se muevan
+            heuristica += middleBoxPieces * 0;
+            heuristica += middleRowPieces * 0;
             heuristica -= vulnerablePieces * 10; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
 
         } else {
             heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
-            heuristica += kingPieces * 9; // Añade el bonus que quieras para las reinas
+            heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
             heuristica += backRowPieces * 4; // Añade el bonus que quieras para las piezas en la última fila
             heuristica += safePieces * 3; // Añade el bonus que quieras para las piezas que no pueden ser tomadas hasta que las piezas detrás de ella (o ella misma) se muevan
-            heuristica -= vulnerablePieces * 4; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
-            heuristica += middleBoxPieces * 3; // Añade el bonus que quieras para las piezas en las 4 columnas del medio de las 2 filas del medio
-            heuristica += middleRowPieces * 2; // Añade el bonus que quieras para las piezas en las 2 filas del medio pero no en las 4 columnas del medio
+            heuristica -= vulnerablePieces * -3; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
+            heuristica += middleBoxPieces * 2.5; // Añade el bonus que quieras para las piezas en las 4 columnas del medio de las 2 filas del medio
+            heuristica += middleRowPieces * 0.5; // Añade el bonus que quieras para las piezas en las 2 filas del medio pero no en las 4 columnas del medio
 
         }
 
