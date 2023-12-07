@@ -202,42 +202,89 @@ public class PlayerMiniMax implements IPlayer, IAuto {
     }
 
     private int evaluarEstatAux(GameStatus s, PlayerType jugador) {
+        nodesExplorats += 1;
         int heuristica = 0;
+        int pawnPieces = 0;
+        int kingPieces = 0;
         int backRowPieces = 0;
         int middleBoxPieces = 0;
         int middleRowPieces = 0;
+        int vulnerablePieces = 0;
+        int safePieces = 0;
+        int opponentPieces = 0;
 
         for (int i = 0; i < s.getSize(); ++i) {
             for (int j = 0; j < s.getSize(); ++j) {
-                Point p = new Point(i, j);
-                CellType casella = s.getPos(i, j);
-                MoveNode n = s.getMoves(p, jugador);
-                if (casella == (jugador == PlayerType.PLAYER1 ? CellType.P1 : CellType.P2)) {
-                    if (casella.isQueen()) {
-                        heuristica += 7;
+                CellType casilla = s.getPos(i, j);
+                if (casilla.getPlayer() == jugador) {
+                    if (casilla.isQueen()) {
+                        kingPieces++; // Cuenta las reinas
                     } else {
-                        heuristica += 5;
+                        pawnPieces++; // Cuenta las piezas regulares
                     }
-                    // Cuenta las piezas en la última fila
-                    if (i == 0 || i == s.getSize() - 1) {
-                        backRowPieces++;
+                    if ((jugador == PlayerType.PLAYER1 && i == 0) || (jugador == PlayerType.PLAYER2 && i == s.getSize() - 1)) {
+                        backRowPieces++; // Cuenta las piezas en la última fila
                     }
-                    // Cuenta las piezas en las 4 columnas del medio de las 2 filas del medio
-                    if ((i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) && (j >= s.getSize() / 2 - 2 && j <= s.getSize() / 2 + 1)) {
-                        middleBoxPieces++;
-                    } // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
-                    else if (i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) {
-                        middleRowPieces++;
+                    if (i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2 && j >= s.getSize() / 2 - 1 && j <= s.getSize() / 2) {
+                        middleBoxPieces++; // Cuenta las piezas en las 4 columnas del medio de las 2 filas del medio
+                    } else if (i >= s.getSize() / 2 - 1 && i <= s.getSize() / 2) {
+                        middleRowPieces++; // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
                     }
-                }
+                    // Cuenta las piezas que pueden ser tomadas por el oponente en el próximo turno
+                    if (jugador == PlayerType.PLAYER1) {
+                        if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
+                            if (s.getPos(i + 1, j - 1).getPlayer() == PlayerType.PLAYER2 && s.getPos(i - 1, j + 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else if (s.getPos(i + 1, j + 1).getPlayer() == PlayerType.PLAYER2 && s.getPos(i - 1, j - 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else {
+                                safePieces++;
+                            }
+                        }
 
+                    } else {
+
+                        if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
+                            if (s.getPos(i - 1, j + 1).getPlayer() == PlayerType.PLAYER1 && s.getPos(i + 1, j - 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else if (s.getPos(i - 1, j - 1).getPlayer() == PlayerType.PLAYER1 && s.getPos(i + 1, j + 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else {
+                                safePieces++;
+                            }
+
+                        }
+
+                    }
+                } else if (casilla.getPlayer() != jugador) {
+                    opponentPieces++;
+                }
             }
         }
 
         // Ajusta la heurística según tus necesidades
-        heuristica += backRowPieces * 4;
-        heuristica += middleBoxPieces * 3;
-        heuristica += middleRowPieces * 1;
+        heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
+        heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
+        if (opponentPieces <= 3) {
+            heuristica += pawnPieces * 0; // Añade el bonus que quieras para las piezas regulares
+            heuristica += kingPieces * 0; // Añade el bonus que quieras para las reinas
+            heuristica += backRowPieces * 0; // Añade el bonus que quieras para las piezas en la última fila
+            heuristica += safePieces * 0; // Añade el bonus que quieras para las piezas que no pueden ser tomadas hasta que las piezas detrás de ella (o ella misma) se muevan
+            heuristica += middleBoxPieces * 0;
+            heuristica += middleRowPieces * 0;
+            heuristica -= vulnerablePieces * 10; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
+
+        } else {
+            heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
+            heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
+            heuristica += backRowPieces * 4; // Añade el bonus que quieras para las piezas en la última fila
+            heuristica += safePieces * 3; // Añade el bonus que quieras para las piezas que no pueden ser tomadas hasta que las piezas detrás de ella (o ella misma) se muevan
+            heuristica -= vulnerablePieces * -3; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
+            heuristica += middleBoxPieces * 2.5; // Añade el bonus que quieras para las piezas en las 4 columnas del medio de las 2 filas del medio
+            heuristica += middleRowPieces * 0.5; // Añade el bonus que quieras para las piezas en las 2 filas del medio pero no en las 4 columnas del medio
+
+        }
+
         return heuristica;
     }
 
