@@ -62,6 +62,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      */
     @Override
     public PlayerMove move(GameStatus s) {
+        nodesExplorats = 0;
         jugadorMaxim = s.getCurrentPlayer();
         jugadorMinim = PlayerType.opposite(jugadorMaxim);
         List<Point> ll = miniMax(s);
@@ -264,24 +265,21 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             double proximityToEnemies = 0;
             Point enemyPos = enemypos.get(0);
             for (Point friendPos : friendpos) {
-                
-                    int distance = Math.abs(friendPos.x - enemyPos.x) + Math.abs(friendPos.y - enemyPos.y);
-                    proximityToEnemies += 1.0 / (distance + 1); // Añade un bonus inversamente proporcional a la distancia
-                
+
+                int distance = Math.abs(friendPos.x - enemyPos.x) + Math.abs(friendPos.y - enemyPos.y);
+                proximityToEnemies += 1.0 / (distance + 1); // Añade un bonus inversamente proporcional a la distancia
+
             }
 
             heuristica += proximityToEnemies * 10; // Añade el bonus que quieras para la proximidad a las piezas enemigas
-
-        } else {
-            heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
-            heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
-            heuristica += backRowPieces * 4; // Añade el bonus que quieras para las piezas en la última fila
-            heuristica += safePieces * 3; // Añade el bonus que quieras para las piezas que no pueden ser tomadas hasta que las piezas detrás de ella (o ella misma) se muevan
-            heuristica -= vulnerablePieces * -3; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
-            heuristica += middleBoxPieces * 2.5; // Añade el bonus que quieras para las piezas en las 4 columnas del medio de las 2 filas del medio
-            heuristica += middleRowPieces * 0.5; // Añade el bonus que quieras para las piezas en las 2 filas del medio pero no en las 4 columnas del medio
-
         }
+        heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
+        heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
+        heuristica += backRowPieces * 4; // Añade el bonus que quieras para las piezas en la última fila
+        heuristica += safePieces * 3; // Añade el bonus que quieras para las piezas que no pueden ser tomadas hasta que las piezas detrás de ella (o ella misma) se muevan
+        heuristica += vulnerablePieces * -3; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
+        heuristica += middleBoxPieces * 2.5; // Añade el bonus que quieras para las piezas en las 4 columnas del medio de las 2 filas del medio
+        heuristica += middleRowPieces * 0.5; // Añade el bonus que quieras para las piezas en las 2 filas del medio pero no en las 4 columnas del medio
 
         return heuristica;
     }
