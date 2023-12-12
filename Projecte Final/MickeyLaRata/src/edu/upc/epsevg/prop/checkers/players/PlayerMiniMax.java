@@ -204,11 +204,15 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         int vulnerablePieces = 0;
         int safePieces = 0;
         int opponentPieces = 0;
+        List<Point> friendpos = new ArrayList<>();
+        List<Point> enemypos = new ArrayList<>();
 
         for (int i = 0; i < s.getSize(); ++i) {
             for (int j = 0; j < s.getSize(); ++j) {
                 CellType casilla = s.getPos(i, j);
                 if (casilla.getPlayer() == jugador) {
+                    Point p0 = new Point(i, j);
+                    friendpos.add(p0);
                     if (casilla.isQueen()) {
                         kingPieces++; // Cuenta las reinas
                     } else {
@@ -223,37 +227,63 @@ public class PlayerMiniMax implements IPlayer, IAuto {
                         middleRowPieces++; // Cuenta las piezas en las 2 filas del medio pero no en las 4 columnas del medio
                     }
                     // Cuenta las piezas que pueden ser tomadas por el oponente en el próximo turno
-                    if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
-                        PlayerType opponentPlayer = (jugador == PlayerType.PLAYER1) ? PlayerType.PLAYER2 : PlayerType.PLAYER1;
-
-                        if ((s.getPos(i + 1, j - 1).getPlayer() == opponentPlayer && s.getPos(i - 1, j + 1) == CellType.EMPTY)
-                                || (s.getPos(i + 1, j + 1).getPlayer() == opponentPlayer && s.getPos(i - 1, j - 1) == CellType.EMPTY)) {
-                            vulnerablePieces++;
-                        } else {
-                            safePieces++;
+                    if (jugador == PlayerType.PLAYER1) {
+                        if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
+                            if (s.getPos(i + 1, j - 1).getPlayer() == PlayerType.PLAYER2 && s.getPos(i - 1, j + 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else if (s.getPos(i + 1, j + 1).getPlayer() == PlayerType.PLAYER2 && s.getPos(i - 1, j - 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else {
+                                safePieces++;
+                            }
                         }
-                    }
 
+                    } else {
+
+                        if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
+                            if (s.getPos(i - 1, j + 1).getPlayer() == PlayerType.PLAYER1 && s.getPos(i + 1, j - 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else if (s.getPos(i - 1, j - 1).getPlayer() == PlayerType.PLAYER1 && s.getPos(i + 1, j + 1) == CellType.EMPTY) {
+                                vulnerablePieces++;
+                            } else {
+                                safePieces++;
+                            }
+
+                        }
+
+                    }
                 } else if (casilla.getPlayer() != jugador) {
                     opponentPieces++;
+                    Point p = new Point(i, j);
+                    enemypos.add(p);
                 }
             }
         }
 
         // Ajusta la heurística según tus necesidades
-        heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
-        heuristica += kingPieces * 7; // Añade el bonus que quieras para las reinas
-        if (opponentPieces <= 3) {
-            heuristica -= vulnerablePieces * 10; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
+        //heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
+        //heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
+        //List<Point> enemyPositions = new ArrayList<>();
+        if (opponentPieces <= 10) {
+            double proximityToEnemies = 0;
+            Point enemyPos = enemypos.get(0);
+            for (Point friendPos : friendpos) {
+                
+                    int distance = Math.abs(friendPos.x - enemyPos.x) + Math.abs(friendPos.y - enemyPos.y);
+                    proximityToEnemies += 1.0 / (distance + 1); // Añade un bonus inversamente proporcional a la distancia
+                
+            }
+
+            heuristica += proximityToEnemies * 10; // Añade el bonus que quieras para la proximidad a las piezas enemigas
 
         } else {
             heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
-            heuristica += kingPieces * 9; // Añade el bonus que quieras para las reinas
+            heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
             heuristica += backRowPieces * 4; // Añade el bonus que quieras para las piezas en la última fila
             heuristica += safePieces * 3; // Añade el bonus que quieras para las piezas que no pueden ser tomadas hasta que las piezas detrás de ella (o ella misma) se muevan
-            heuristica -= vulnerablePieces * 4; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
-            heuristica += middleBoxPieces * 3; // Añade el bonus que quieras para las piezas en las 4 columnas del medio de las 2 filas del medio
-            heuristica += middleRowPieces * 2; // Añade el bonus que quieras para las piezas en las 2 filas del medio pero no en las 4 columnas del medio
+            heuristica -= vulnerablePieces * -3; // Resta el bonus que quieras para las piezas que pueden ser tomadas por el oponente en el próximo turno
+            heuristica += middleBoxPieces * 2.5; // Añade el bonus que quieras para las piezas en las 4 columnas del medio de las 2 filas del medio
+            heuristica += middleRowPieces * 0.5; // Añade el bonus que quieras para las piezas en las 2 filas del medio pero no en las 4 columnas del medio
 
         }
 
