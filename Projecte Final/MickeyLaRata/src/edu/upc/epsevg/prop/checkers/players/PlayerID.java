@@ -68,7 +68,7 @@ public class PlayerID implements IPlayer, IAuto {
 
         while (!timeout) {
             List<Point> moviment = miniMax(gs, depth);
-            if (heuristicaActual > millorValorHeuristic) {
+            if (!timeout && (moviment != null || !moviment.isEmpty())) {
                 millorMoviment = moviment;
                 millorValorHeuristic = heuristicaActual;
             }

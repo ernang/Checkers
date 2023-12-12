@@ -31,11 +31,11 @@ public class HeadlessGame {
         IPlayer player1 = new PlayerMiniMax(8);
         //IPlayer player1 = new PlayerID();
 
-        //IPlayer player2 = new OnePiecePlayer(1);//GB
-        IPlayer player2 = new RandomPlayer("Kamikaze 2");
+        IPlayer player2 = new OnePiecePlayer(1);//GB
+        //IPlayer player2 = new RandomPlayer("Kamikaze 2");
         //IPlayer player2 = new PlayerMiniMax(8);
         //IPlayer player2 = new PlayerID();
-        HeadlessGame game = new HeadlessGame(player1, player2, 100/*s timeout*/, 30/*games*/);
+        HeadlessGame game = new HeadlessGame(player1, player2, 100/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
 

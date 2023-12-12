@@ -76,7 +76,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      * @return Una llista de punts que representa el millor moviment.
      */
     private List<Point> miniMax(GameStatus s) {
-        int heuristicaActual = -20000, alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
+        double heuristicaActual = -20000, alpha = Double.NEGATIVE_INFINITY, beta = Double.POSITIVE_INFINITY;
 
         List<List<Point>> camins = obtenirMoviments(s.getMoves());
         List<Point> points = new ArrayList<>();
@@ -85,7 +85,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
 
-            int valorHeuristic = minValor(aux, profunditat - 1, alpha, beta);
+            double valorHeuristic = minValor(aux, profunditat - 1, alpha, beta);
 
             if (valorHeuristic > heuristicaActual) {
                 heuristicaActual = valorHeuristic;
@@ -98,8 +98,8 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         return points;
     }
 
-    private int minValor(GameStatus s, int depth, int alpha, int beta) {
-        int valorHeuristic = 10000;
+    private double minValor(GameStatus s, int depth, double alpha, double beta) {
+        double valorHeuristic = 10000;
         if (s.isGameOver()) {
             if (s.GetWinner() == jugadorMaxim) {
                 return valorHeuristic;
@@ -117,7 +117,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
 
-            int heuristicaActual = maxValor(aux, depth - 1, alpha, beta);
+            double heuristicaActual = maxValor(aux, depth - 1, alpha, beta);
             valorHeuristic = Math.min(valorHeuristic, heuristicaActual);
             beta = Math.min(valorHeuristic, beta);
 
@@ -129,8 +129,8 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         return valorHeuristic;
     }
 
-    private int maxValor(GameStatus s, int depth, int alpha, int beta) {
-        int valorHeuristic = -10000;
+    private double maxValor(GameStatus s, int depth, double alpha, double beta) {
+        double valorHeuristic = -10000;
 
         if (s.isGameOver()) {
             if (s.GetWinner() == jugadorMinim) {
@@ -150,7 +150,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
 
-            int heuristicaActual = minValor(aux, depth - 1, alpha, beta);
+            double heuristicaActual = minValor(aux, depth - 1, alpha, beta);
             valorHeuristic = Math.max(valorHeuristic, heuristicaActual);
             alpha = Math.max(valorHeuristic, alpha);
 
@@ -188,14 +188,13 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         }
     }
 
-    private int evaluarEstat(GameStatus s) {
+    private double evaluarEstat(GameStatus s) {
         nodesExplorats++;
         return evaluarEstatAux(s, jugadorMaxim) - evaluarEstatAux(s, jugadorMinim);
     }
 
-    private int evaluarEstatAux(GameStatus s, PlayerType jugador) {
-        nodesExplorats += 1;
-        int heuristica = 0;
+    private double evaluarEstatAux(GameStatus s, PlayerType jugador) {
+        double heuristica = 0;
         int pawnPieces = 0;
         int kingPieces = 0;
         int backRowPieces = 0;
@@ -261,9 +260,6 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         }
 
         // Ajusta la heurística según tus necesidades
-        //heuristica += pawnPieces * 5; // Añade el bonus que quieras para las piezas regulares
-        //heuristica += kingPieces * 7.75; // Añade el bonus que quieras para las reinas
-        //List<Point> enemyPositions = new ArrayList<>();
         if (opponentPieces <= 10) {
             double proximityToEnemies = 0;
             Point enemyPos = enemypos.get(0);
