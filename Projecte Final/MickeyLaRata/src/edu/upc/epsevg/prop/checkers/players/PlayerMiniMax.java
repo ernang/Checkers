@@ -252,7 +252,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
                         }
 
                     }
-                } else if (casilla.getPlayer() != jugador) {
+                } else if (casilla.getPlayer() == PlayerType.opposite(jugador)) {
                     opponentPieces++;
                     Point p = new Point(i, j);
                     enemypos.add(p);
