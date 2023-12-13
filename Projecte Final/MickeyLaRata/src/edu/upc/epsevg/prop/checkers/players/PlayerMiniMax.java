@@ -29,7 +29,7 @@ import java.util.Random;
  */
 public class PlayerMiniMax implements IPlayer, IAuto {
 
-    private String name = "Mickey La Rata";
+    private String name = "MickeyLaRata";
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
     private int profunditat = 4;

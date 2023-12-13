@@ -29,11 +29,10 @@ import java.util.Random;
  */
 public class PlayerID implements IPlayer, IAuto {
 
-    private String name = "Mickey La Rata Iterativa";
+    private String name = "MickeyID";
     private int nodesExplorats;
     private int profunditat;
     private boolean timeout;
-    private double millorValorHeuristic;
     private double heuristicaActual;
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
@@ -42,7 +41,7 @@ public class PlayerID implements IPlayer, IAuto {
         nodesExplorats = 0;
         profunditat = 0;
         timeout = false;
-        millorValorHeuristic = heuristicaActual = -20000;
+        heuristicaActual = -20000;
     }
 
     @Override
@@ -55,7 +54,7 @@ public class PlayerID implements IPlayer, IAuto {
         nodesExplorats = 0;
         profunditat = 0;
         timeout = false;
-        millorValorHeuristic = heuristicaActual = -20000;
+        heuristicaActual = -20000;
         jugadorMaxim = gs.getCurrentPlayer();
         jugadorMinim = PlayerType.opposite(jugadorMaxim);
         List<Point> moviment = ids(gs);
@@ -68,9 +67,8 @@ public class PlayerID implements IPlayer, IAuto {
 
         while (!timeout) {
             List<Point> moviment = miniMax(gs, depth);
-            if (!timeout && (moviment != null || !moviment.isEmpty())) {
+            if (!timeout) {
                 millorMoviment = moviment;
-                millorValorHeuristic = heuristicaActual;
             }
             depth++;
         }
@@ -87,7 +85,7 @@ public class PlayerID implements IPlayer, IAuto {
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
         for (List<Point> cami : camins) {
             if (timeout) {
-                break;
+                return null;
             }
             GameStatus aux = new GameStatus(gs);
             aux.movePiece(cami);
@@ -101,6 +99,9 @@ public class PlayerID implements IPlayer, IAuto {
 
             // Actualitzar el valor d'alpha
             alpha = Math.max(alpha, heuristicaActual);
+        }
+        if (timeout) {
+            return null;
         }
         heuristicaActual = valorHeuristic;
         return moviment;
