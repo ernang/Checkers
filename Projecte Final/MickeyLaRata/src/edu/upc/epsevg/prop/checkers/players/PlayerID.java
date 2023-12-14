@@ -33,7 +33,6 @@ public class PlayerID implements IPlayer, IAuto {
     private int nodesExplorats;
     private int profunditat;
     private boolean timeout;
-    private double heuristicaActual;
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
 
@@ -41,7 +40,6 @@ public class PlayerID implements IPlayer, IAuto {
         nodesExplorats = 0;
         profunditat = 0;
         timeout = false;
-        heuristicaActual = -20000;
     }
 
     @Override
@@ -54,7 +52,6 @@ public class PlayerID implements IPlayer, IAuto {
         nodesExplorats = 0;
         profunditat = 0;
         timeout = false;
-        heuristicaActual = -20000;
         jugadorMaxim = gs.getCurrentPlayer();
         jugadorMinim = PlayerType.opposite(jugadorMaxim);
         List<Point> moviment = ids(gs);
@@ -98,13 +95,9 @@ public class PlayerID implements IPlayer, IAuto {
             }
 
             // Actualitzar el valor d'alpha
-            alpha = Math.max(alpha, heuristicaActual);
+            alpha = Math.max(alpha, valorHeuristic);
         }
-        if (timeout) {
-            return null;
-        }
-        heuristicaActual = valorHeuristic;
-        return moviment;
+        return (timeout) ? null : moviment;
     }
 
     private double minValor(GameStatus gs, int depth, double alpha, double beta) {
@@ -123,7 +116,7 @@ public class PlayerID implements IPlayer, IAuto {
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
         for (List<Point> cami : camins) {
             if (timeout) {
-                break;
+                return 0;
             }
             GameStatus aux = new GameStatus(gs);
             aux.movePiece(cami);
@@ -154,7 +147,7 @@ public class PlayerID implements IPlayer, IAuto {
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
         for (List<Point> cami : camins) {
             if (timeout) {
-                break;
+                return 0;
             }
             GameStatus aux = new GameStatus(gs);
             aux.movePiece(cami);
@@ -221,6 +214,9 @@ public class PlayerID implements IPlayer, IAuto {
 
         for (int i = 0; i < s.getSize(); ++i) {
             for (int j = 0; j < s.getSize(); ++j) {
+                if (timeout) {
+                    return 0;
+                }
                 CellType casilla = s.getPos(i, j);
                 if (casilla.getPlayer() == jugador) {
                     Point p0 = new Point(i, j);
