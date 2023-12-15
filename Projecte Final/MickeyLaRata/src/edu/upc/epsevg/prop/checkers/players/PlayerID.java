@@ -97,10 +97,13 @@ public class PlayerID implements IPlayer, IAuto {
             // Actualitzar el valor d'alpha
             alpha = Math.max(alpha, valorHeuristic);
         }
-        return (timeout) ? null : moviment;
+        return moviment;
     }
 
     private double minValor(GameStatus gs, int depth, double alpha, double beta) {
+        if (timeout) {
+            return 0;
+        }
         double valorHeuristic = 10000;
         if (gs.isGameOver()) {
             if (gs.GetWinner() == jugadorMaxim) {
@@ -115,9 +118,6 @@ public class PlayerID implements IPlayer, IAuto {
         }
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
         for (List<Point> cami : camins) {
-            if (timeout) {
-                return 0;
-            }
             GameStatus aux = new GameStatus(gs);
             aux.movePiece(cami);
 
@@ -132,6 +132,9 @@ public class PlayerID implements IPlayer, IAuto {
     }
 
     private double maxValor(GameStatus gs, int depth, double alpha, double beta) {
+        if (timeout) {
+            return 0;
+        }
         double valorHeuristic = -10000;
         if (gs.isGameOver()) {
             if (gs.GetWinner() == jugadorMinim) {
@@ -146,9 +149,6 @@ public class PlayerID implements IPlayer, IAuto {
         }
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
         for (List<Point> cami : camins) {
-            if (timeout) {
-                return 0;
-            }
             GameStatus aux = new GameStatus(gs);
             aux.movePiece(cami);
             double heuristica = minValor(aux, depth - 1, alpha, beta);
@@ -214,9 +214,6 @@ public class PlayerID implements IPlayer, IAuto {
 
         for (int i = 0; i < s.getSize(); ++i) {
             for (int j = 0; j < s.getSize(); ++j) {
-                if (timeout) {
-                    return 0;
-                }
                 CellType casilla = s.getPos(i, j);
                 if (casilla.getPlayer() == jugador) {
                     Point p0 = new Point(i, j);
