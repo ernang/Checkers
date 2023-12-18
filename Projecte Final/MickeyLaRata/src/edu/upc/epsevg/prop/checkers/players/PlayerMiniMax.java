@@ -99,6 +99,16 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         return points;
     }
 
+    /**
+     * Calcula i retorna el valor mínim de la heurística per a un estat de joc
+     * donat.
+     *
+     * @param s L'estat actual del joc.
+     * @param depth La profunditat actual de l'arbre de cerca.
+     * @param alpha El millor valor actual per al jugador Max.
+     * @param beta El millor valor actual per al jugador Min.
+     * @return El valor mínim de la heurística per a l'estat de joc donat.
+     */
     private double minValor(GameStatus s, int depth, double alpha, double beta) {
         double valorHeuristic = 10000;
         if (s.isGameOver()) {
@@ -130,6 +140,15 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         return valorHeuristic;
     }
 
+    /**
+     * Calcula el valor màxim de la heurística per a l'estat del joc donat.
+     *
+     * @param s L'estat actual del joc.
+     * @param depth La profunditat actual en l'arbre de recerca.
+     * @param alpha Valor alfa per a l'algoritme alpha-beta pruning.
+     * @param beta Valor beta per a l'algoritme alpha-beta pruning.
+     * @return El valor màxim de la heurística.
+     */
     private double maxValor(GameStatus s, int depth, double alpha, double beta) {
         double valorHeuristic = -10000;
 
@@ -162,6 +181,14 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         return valorHeuristic;
     }
 
+    /**
+     * Obté una llista de camins possibles a partir de la llista de nodes de
+     * moviment donada.
+     *
+     * @param moviments Llista de nodes de moviment per analitzar.
+     * @return Llista de llistes de punts que representen els diferents camins
+     * possibles ordenats de major longitud a menor longitud.
+     */
     private List<List<Point>> obtenirMoviments(List<MoveNode> moviments) {
         List<List<Point>> resultats = new ArrayList<>();
 
@@ -174,6 +201,15 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         return resultats;
     }
 
+    /**
+     * Funció recursiva auxiliar a obtenirMoviments. Obté de forma recursiva la
+     * llista del camí per a cada possible moviment.
+     *
+     * @param moviment Node de moviment actual.
+     * @param cami Camí actual que s'està construint.
+     * @param resultats Llista de llistes de punts per emmagatzemar els
+     * diferents camins possibles.
+     */
     private void obtenirMovimentsAuxiliars(MoveNode moviment, List<Point> cami, List<List<Point>> resultats) {
         List<MoveNode> següentsMoviments = moviment.getChildren();
         if (següentsMoviments.isEmpty()) {
@@ -189,11 +225,26 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         }
     }
 
+    /**
+     * Avalua l'estat actual del joc i calcula una heurística en base a diversos
+     * factors. Incrementa el comptador de nodes explorats.
+     *
+     * @param s Estat actual del joc.
+     * @return Valor de l'heurística per a l'estat donat.
+     */
     private double evaluarEstat(GameStatus s) {
         nodesExplorats++;
         return evaluarEstatAux(s, jugadorMaxim) - evaluarEstatAux(s, jugadorMinim);
     }
 
+    /**
+     * Funció auxiliar per avaluar l'estat del joc per a un jugador específic.
+     *
+     * @param s Estat actual del joc.
+     * @param jugador Jugador per al qual es calcula l'heurística.
+     * @return Valor de l'heurística per a l'estat donat i el jugador
+     * especificat.
+     */
     private double evaluarEstatAux(GameStatus s, PlayerType jugador) {
         double heuristica = 0;
         int pawnPieces = 0;
