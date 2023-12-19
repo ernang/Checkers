@@ -235,9 +235,6 @@ public class PlayerMiniMax implements IPlayer, IAuto {
     private double evaluarEstat(GameStatus s) {
         nodesExplorats++;
         double heuristica = evaluarEstatAux(s, jugadorMaxim) - evaluarEstatAux(s, jugadorMinim);    // Potencia el final del juego si queda un número bajo de piezas en el tablero
-        if (s.getScore(jugadorMaxim) + s.getScore(jugadorMinim) <= 10) {
-            heuristica += potenciarEndings(s);
-        }
         return heuristica;
     }
 
@@ -316,7 +313,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         }
 
         // Ajusta la heurística según tus necesidades
-        if (opponentPieces <= 10) {
+        if (opponentPieces <= 5) {
             double proximityToEnemies = 0;
             Point enemyPos = enemypos.get(0);
             for (Point friendPos : friendpos) {
@@ -338,39 +335,6 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         return heuristica;
     }
     
-    private double potenciarEndings(GameStatus s) {
-        double bonusEndings = 0;
-
-        // Obtén la posición de las piezas restantes
-        List<Point> remainingPieces = new ArrayList<>();
-        for (int i = 0; i < s.getSize(); ++i) {
-            for (int j = 0; j < s.getSize(); ++j) {
-                CellType casilla = s.getPos(i, j);
-                if (casilla != CellType.EMPTY) {
-                    remainingPieces.add(new Point(i, j));
-                }
-            }
-        }
-
-        // Calcula la distancia promedio entre las piezas restantes
-        if (!remainingPieces.isEmpty()) {
-            double distanciaPromedio = 0;
-            for (Point p1 : remainingPieces) {
-                for (Point p2 : remainingPieces) {
-                    if (!p1.equals(p2)) {
-                        distanciaPromedio += Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
-                    }
-                }
-            }
-            distanciaPromedio /= remainingPieces.size() * (remainingPieces.size() - 1);
-
-            // Otorga un bonus inversamente proporcional a la distancia promedio
-            bonusEndings += 1.0 / (distanciaPromedio + 1);
-        }
-        
-        return bonusEndings;
-    }
-
     /**
      * Ens avisa que hem de parar la cerca en curs perquè s'ha exhaurit el temps
      * de joc.

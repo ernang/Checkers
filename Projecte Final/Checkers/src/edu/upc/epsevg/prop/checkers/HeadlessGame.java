@@ -29,8 +29,8 @@ public class HeadlessGame {
 
         //IPlayer player1 = new OnePiecePlayer(1);//GB
         //IPlayer player1 = new RandomPlayer("Kamikaze 1");
-        IPlayer player1 = new PlayerMiniMax(8);
-        //IPlayer player1 = new PlayerID();
+        //IPlayer player1 = new PlayerMiniMax(8);
+        IPlayer player1 = new PlayerID();
 
         IPlayer player2 = new OnePiecePlayer(1);//GB
         //IPlayer player2 = new RandomPlayer("Kamikaze 2");
