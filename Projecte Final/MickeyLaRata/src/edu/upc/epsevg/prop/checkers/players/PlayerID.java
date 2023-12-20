@@ -38,9 +38,6 @@ public class PlayerID implements IPlayer, IAuto {
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
     private List<Point> millorMoviment;
-    private int turns = 0;
-    private int total_nodes = 0;
-    private boolean heGuanyat;
 
     // Zobrist Hashing
     private class GameInfo {
@@ -54,7 +51,7 @@ public class PlayerID implements IPlayer, IAuto {
         }
 
     }
-    private long[][][] zobrist = new long[8][8][4];
+    private long[][][] zobrist;
     private HashMap<Long, GameInfo> hashTable;
 
     /**
@@ -65,8 +62,8 @@ public class PlayerID implements IPlayer, IAuto {
         nodesExplorats = 0;
         profunditat = 0;
         timeout = false;
-        heGuanyat = false;
         Random rand = new Random();
+        zobrist = new long[8][8][4];
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 for (int k = 0; k < 4; k++) {
@@ -99,7 +96,6 @@ public class PlayerID implements IPlayer, IAuto {
         nodesExplorats = 0;
         profunditat = 0;
         timeout = false;
-        heGuanyat = false;
         millorMoviment = new ArrayList<>();
         jugadorMaxim = gs.getCurrentPlayer();
         jugadorMinim = PlayerType.opposite(jugadorMaxim);
@@ -141,7 +137,7 @@ public class PlayerID implements IPlayer, IAuto {
     private List<Point> miniMax(GameStatus gs, int depth) {
         List<Point> moviment = new ArrayList<>();
 
-        double valorHeuristic = -20000.0;
+        double valorHeuristic = -2000000;
         double alpha = Double.NEGATIVE_INFINITY;
         double beta = Double.POSITIVE_INFINITY;
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
@@ -153,6 +149,7 @@ public class PlayerID implements IPlayer, IAuto {
             GameStatus aux = new GameStatus(gs);
             aux.movePiece(cami);
             double heuristica = minValor(aux, depth - 1, alpha, beta);
+
             // Actualitzar el millor moviment si es troba un valor heurístic millor
             if (heuristica > valorHeuristic) {
                 valorHeuristic = heuristica;
@@ -180,12 +177,12 @@ public class PlayerID implements IPlayer, IAuto {
         if (timeout) {
             return 0;
         }
-        double valorHeuristic = 10000;
+        double valorHeuristic = 1000000;
         if (gs.isGameOver()) {
             if (gs.GetWinner() == jugadorMaxim) {
                 return valorHeuristic;
             }
-            if (gs.GetWinner() != jugadorMaxim && gs.GetWinner() != jugadorMinim) {
+            if (gs.GetWinner() == null) {
                 return 0;
             }
         }
@@ -193,9 +190,9 @@ public class PlayerID implements IPlayer, IAuto {
             return evaluarEstat(gs);
         }
 
-        long hash = updateZobristHash(gs);
+        long hash = getZobristHash(gs);
         GameInfo gameInfo = hashTable.get(hash);
-        if (gameInfo != null && gameInfo.jugador == jugadorMinim) {
+        if (gameInfo != null && gameInfo.jugador == jugadorMaxim) {
             valorHeuristic = gameInfo.heuristica;
         }
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
@@ -228,21 +225,21 @@ public class PlayerID implements IPlayer, IAuto {
         if (timeout) {
             return 0;
         }
-        double valorHeuristic = -10000;
+        double valorHeuristic = -1000000;
         if (gs.isGameOver()) {
             if (gs.GetWinner() == jugadorMinim) {
                 return valorHeuristic;
             }
-            if (gs.GetWinner() != jugadorMaxim && gs.GetWinner() != jugadorMinim) {
+            if (gs.GetWinner() == null) {
                 return 0;
             }
         }
         if (depth == 0) {
             return evaluarEstat(gs);
         }
-        long hash = updateZobristHash(gs);
+        long hash = getZobristHash(gs);
         GameInfo gameInfo = hashTable.get(hash);
-        if (gameInfo != null && gameInfo.jugador == jugadorMaxim) {
+        if (gameInfo != null && gameInfo.jugador == jugadorMinim) {
             valorHeuristic = gameInfo.heuristica;
         }
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
@@ -419,6 +416,16 @@ public class PlayerID implements IPlayer, IAuto {
         return heuristica;
     }
 
+    /**
+     * Funció que reordena la llista de camins posant el camí especificat com a
+     * primer element, si aquest camí es troba a la llista. En cas contrari, la
+     * llista es manté inalterada.
+     *
+     * @param camins Llista de camins a reordenar.
+     * @param moviment Camí que es vol establir com a primer element.
+     * @return Llista de camins reordenada, amb el camí especificat com a primer
+     * element si es troba, o la mateixa llista si el camí no és present.
+     */
     private List<List<Point>> ordenarCami(List<List<Point>> camins, List<Point> moviment) {
         int index = camins.indexOf(moviment);
         if (index >= 0) {
@@ -428,12 +435,14 @@ public class PlayerID implements IPlayer, IAuto {
     }
 
     /**
-     * Update the Zobrist hash value based on the current game state.
+     * Calcula i retorna el hash Zobrist per a l'estat actual del joc. Utilitza
+     * l'algorisme Zobrist hashing per generar un valor únic basat en les
+     * posicions actuals del taulell i els tipus de cel·la corresponents.
      *
-     * @param gs Current game state.
-     * @return Updated Zobrist hash value.
+     * @param gs L'estat actual del joc (GameStatus).
+     * @return El hash Zobrist calculat per a l'estat actual del joc.
      */
-    private long updateZobristHash(GameStatus gs) {
+    private long getZobristHash(GameStatus gs) {
         long hash = 0;
 
         for (int i = 0; i < gs.getSize(); ++i) {
@@ -458,7 +467,6 @@ public class PlayerID implements IPlayer, IAuto {
 
             }
         }
-
         return hash;
     }
 
