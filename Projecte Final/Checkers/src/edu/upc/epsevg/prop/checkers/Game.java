@@ -7,7 +7,6 @@ import edu.upc.epsevg.prop.checkers.players.PlayerMiniMax;
 import edu.upc.epsevg.prop.checkers.players.OnePiecePlayer;
 import edu.upc.epsevg.prop.checkers.players.PlayerID;
 import edu.upc.epsevg.prop.checkers.players.PlayerMiniMax;
-import edu.upc.epsevg.prop.checkers.players.PlayerMiniMax1;
 
 import javax.swing.SwingUtilities;
 
@@ -26,11 +25,10 @@ public class Game {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                //IPlayer player1 = new OnePiecePlayer(1);//GB
+                IPlayer player1 = new OnePiecePlayer(1);//GB
                 //IPlayer player1 = new RandomPlayer("Kamikaze 1");
-                IPlayer player1 = new PlayerMiniMax(8);
+                //IPlayer player1 = new PlayerMiniMax(8);
                 //IPlayer player1 = new PlayerID();
-                //IPlayer player1 = new PlayerMiniMax1(8);
                 
                 //IPlayer player2 = new OnePiecePlayer(1);//GB
                 //IPlayer player2 = new RandomPlayer("Kamikaze 2");
