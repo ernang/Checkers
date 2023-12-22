@@ -37,13 +37,13 @@ public class PlayerID1 implements IPlayer, IAuto {
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
     private List<Point> millorMoviment;
+    private int profunditat_actual;
+    private static int colision;
 
     /*========================
     *  ZOBRIST HASHING
     * =======================*/
     private HashMap<ProfeNoFuncaStatus, GameInfo> hashMap;
-    private long[][][] zobrist;
-    private long black_to_move;
 
     /**
      * Constructor per defecte del jugador automàtic. Inicialitza els atributs
@@ -53,17 +53,7 @@ public class PlayerID1 implements IPlayer, IAuto {
         nodesExplorats = 0;
         profunditat = 0;
         timeout = false;
-        zobrist = new long[8][8][4];
-        Random rand = new Random();
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                for (int k = 0; k < 4; k++) {
-                    zobrist[i][j][k] = rand.nextLong();
-                }
-            }
-        }
-        black_to_move = rand.nextLong();
-        hashMap = new HashMap<>();
+        hashMap = new HashMap<>(119304599);
     }
 
     /**
@@ -88,14 +78,14 @@ public class PlayerID1 implements IPlayer, IAuto {
         nodesExplorats = 0;
         profunditat = 0;
         timeout = false;
+        colision = 0;
         millorMoviment = new ArrayList<>();
         jugadorMaxim = gs.getCurrentPlayer();
         jugadorMinim = PlayerType.opposite(jugadorMaxim);
+        profunditat_actual = 1;
         ProfeNoFuncaStatus ps = new ProfeNoFuncaStatus(gs);
-        ps.setZobrist(zobrist);
-        ps.setBlack_to_move(black_to_move);
         List<Point> moviment = ids(ps);
-        return new PlayerMove(moviment, nodesExplorats, profunditat, SearchType.MINIMAX);
+        return new PlayerMove(moviment, nodesExplorats, profunditat_actual, SearchType.MINIMAX);
     }
 
     /**
@@ -107,15 +97,13 @@ public class PlayerID1 implements IPlayer, IAuto {
      * @return Millor moviment trobat durant la cerca.
      */
     private List<Point> ids(ProfeNoFuncaStatus gs) {
-        int depth = 1;
         while (!timeout) {
-            List<Point> moviment = miniMax(gs, depth);
+            List<Point> moviment = miniMax(gs, profunditat_actual);
             if (!timeout) {
                 millorMoviment = moviment;
             }
-            depth++;
+            profunditat_actual++;
         }
-        profunditat = depth;
         return millorMoviment;
     }
 
@@ -169,6 +157,7 @@ public class PlayerID1 implements IPlayer, IAuto {
      * 0 en cas de timeout.
      */
     private double minValor(ProfeNoFuncaStatus gs, int depth, double alpha, double beta) {
+        int indexMillorMoviment = -1;
         if (timeout) {
             return 0;
         }
@@ -184,19 +173,28 @@ public class PlayerID1 implements IPlayer, IAuto {
         if (depth == 0) {
             return evaluarEstat(gs);
         }
-
+        GameInfo gameInfo = hashMap.get(gs);
+        int movInfo = (gameInfo != null) ? gameInfo.getIndexMoviment() : -1;
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
-        for (List<Point> cami : camins) {
+        if (movInfo > -1 && movInfo < camins.size()) {
+            camins.add(0, camins.remove(movInfo));
+        }
+        for (int i = 0; i < camins.size(); i++) {
+            List<Point> cami = camins.get(i);
             ProfeNoFuncaStatus aux = new ProfeNoFuncaStatus(gs);
             aux.movePiece(cami);
 
             double heuristica = maxValor(aux, depth - 1, alpha, beta);
+            if (heuristica < valorHeuristic) {
+                indexMillorMoviment = i;
+            }
             valorHeuristic = Math.min(valorHeuristic, heuristica);
             beta = Math.min(beta, valorHeuristic);
             if (alpha >= beta) {
                 break;
             }
         }
+        hashMap.put(gs, new GameInfo(indexMillorMoviment, profunditat_actual - depth));
         return valorHeuristic;
     }
 
@@ -211,6 +209,7 @@ public class PlayerID1 implements IPlayer, IAuto {
      * @return El valor màxim de la heurística o 0 en cas de timeout.
      */
     private double maxValor(ProfeNoFuncaStatus gs, int depth, double alpha, double beta) {
+        int indexMillorMoviment = -1;
         if (timeout) {
             return 0;
         }
@@ -226,17 +225,27 @@ public class PlayerID1 implements IPlayer, IAuto {
         if (depth == 0) {
             return evaluarEstat(gs);
         }
+        GameInfo gameInfo = hashMap.get(gs);
+        int movInfo = (gameInfo != null) ? gameInfo.getIndexMoviment() : -1;
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
-        for (List<Point> cami : camins) {
+        if (movInfo > -1 && movInfo < camins.size()) {
+            camins.add(0, camins.remove(movInfo));
+        }
+        for (int i = 0; i < camins.size(); i++) {
+            List<Point> cami = camins.get(i);
             ProfeNoFuncaStatus aux = new ProfeNoFuncaStatus(gs);
             aux.movePiece(cami);
             double heuristica = minValor(aux, depth - 1, alpha, beta);
+            if (heuristica > valorHeuristic) {
+                indexMillorMoviment = i;
+            }
             valorHeuristic = Math.max(heuristica, valorHeuristic);
             alpha = Math.max(valorHeuristic, alpha);
             if (alpha >= beta) {
                 break;
             }
         }
+        hashMap.put(gs, new GameInfo(indexMillorMoviment, profunditat_actual - depth));
         return valorHeuristic;
     }
 

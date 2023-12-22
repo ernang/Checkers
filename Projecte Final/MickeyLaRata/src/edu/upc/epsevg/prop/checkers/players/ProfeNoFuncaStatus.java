@@ -5,8 +5,15 @@
 package edu.upc.epsevg.prop.checkers.players;
 
 import edu.upc.epsevg.prop.checkers.CellType;
+import static edu.upc.epsevg.prop.checkers.CellType.P1;
+import static edu.upc.epsevg.prop.checkers.CellType.P1Q;
+import static edu.upc.epsevg.prop.checkers.CellType.P2;
+import static edu.upc.epsevg.prop.checkers.CellType.P2Q;
 import edu.upc.epsevg.prop.checkers.GameStatus;
 import edu.upc.epsevg.prop.checkers.PlayerType;
+import java.awt.Point;
+import java.util.List;
+import java.util.Random;
 
 /**
  * ProfeNoFuncaStatus amplia la funcionalitat de GameStatus incorporant la
@@ -22,8 +29,23 @@ public class ProfeNoFuncaStatus extends GameStatus {
      * Valors de hash Zobrist per a diferents peces i les seves posicions al
      * tauler de joc.
      */
-    private long[][][] zobrist;
-    private long black_to_move;
+    private static int[][][] zobrist;
+    private static int black_to_move;
+    private int hash;
+    private boolean hash_updated = false;
+
+    static {
+        zobrist = new int[8][8][4];
+        Random rand = new Random();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                for (int k = 0; k < 4; k++) {
+                    zobrist[i][j][k] = rand.nextInt();
+                }
+            }
+        }
+        black_to_move = rand.nextInt();
+    }
 
     /**
      * Construeix un objecte ProfeNoFuncaStatus basat en el tauler de joc donat.
@@ -45,27 +67,12 @@ public class ProfeNoFuncaStatus extends GameStatus {
         super(gs);
     }
 
-    /**
-     * Estableix els valors de hash Zobrist per a la instància actual.
-     *
-     * @param zobrist Els valors de hash Zobrist per a diferents peces i les
-     * seves posicions.
-     */
-    public void setZobrist(long[][][] zobrist) {
-        this.zobrist = zobrist;
-    }
-
-    public void setBlack_to_move(long black_to_move) {
-        this.black_to_move = black_to_move;
-    }
-
-    /**
-     * Calcula el hash Zobrist per a l'estat de joc donat.
-     *
-     * @return El valor de hash Zobrist per a l'estat de joc donat.
-     */
-    public long getHash() {
-        long hash = 0;
+    @Override
+    public int hashCode() {
+        if (hash_updated) {
+            return hash;
+        }
+        hash = 0;
         if (this.getCurrentPlayer() == PlayerType.PLAYER1) {
             hash ^= black_to_move;
         }
@@ -87,6 +94,29 @@ public class ProfeNoFuncaStatus extends GameStatus {
                 }
             }
         }
+        hash_updated = true;
         return hash;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ProfeNoFuncaStatus other = (ProfeNoFuncaStatus) obj;
+        return this.hashCode() == other.hashCode();
+    }
+
+    @Override
+    public void movePiece(List<Point> list) {
+        super.movePiece(list);
+        hash_updated = false;
+    }
+
 }

@@ -3,6 +3,7 @@ package edu.upc.epsevg.prop.checkers;
 import edu.upc.epsevg.prop.checkers.players.PlayerMiniMax;
 import edu.upc.epsevg.prop.checkers.players.OnePiecePlayer;
 import edu.upc.epsevg.prop.checkers.players.PlayerID;
+import edu.upc.epsevg.prop.checkers.players.PlayerID1;
 import edu.upc.epsevg.prop.checkers.players.PlayerMiniMax;
 import edu.upc.epsevg.prop.checkers.players.RandomPlayer;
 import java.lang.ref.WeakReference;
@@ -30,7 +31,7 @@ public class HeadlessGame {
         //IPlayer player1 = new OnePiecePlayer(1);//GB
         //IPlayer player1 = new RandomPlayer("Kamikaze 1");
         //IPlayer player1 = new PlayerMiniMax(8);
-        IPlayer player1 = new PlayerID();
+        IPlayer player1 = new PlayerID1();
 
         IPlayer player2 = new OnePiecePlayer(1);//GB
         //IPlayer player2 = new RandomPlayer("Kamikaze 2");

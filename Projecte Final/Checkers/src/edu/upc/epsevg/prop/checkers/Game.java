@@ -6,6 +6,7 @@ import edu.upc.epsevg.prop.checkers.IPlayer;
 import edu.upc.epsevg.prop.checkers.players.PlayerMiniMax;
 import edu.upc.epsevg.prop.checkers.players.OnePiecePlayer;
 import edu.upc.epsevg.prop.checkers.players.PlayerID;
+import edu.upc.epsevg.prop.checkers.players.PlayerID1;
 import edu.upc.epsevg.prop.checkers.players.PlayerMiniMax;
 
 import javax.swing.SwingUtilities;
@@ -29,12 +30,12 @@ public class Game {
                 //IPlayer player1 = new RandomPlayer("Kamikaze 1");
                 //IPlayer player1 = new PlayerMiniMax(8);
                 //IPlayer player1 = new PlayerID();
-                
+
                 //IPlayer player2 = new OnePiecePlayer(1);//GB
                 //IPlayer player2 = new RandomPlayer("Kamikaze 2");
                 //IPlayer player2 = new PlayerMiniMax(8);
-                IPlayer player2 = new PlayerID();
-
+                //IPlayer player2 = new PlayerID();
+                IPlayer player2 = new PlayerID1();
                 new Board(player1, player2, 1, false);
             }
         });

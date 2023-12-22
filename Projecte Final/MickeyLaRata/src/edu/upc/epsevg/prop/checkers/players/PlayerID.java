@@ -53,6 +53,7 @@ public class PlayerID implements IPlayer, IAuto {
     }
     private long[][][] zobrist;
     private HashMap<Long, GameInfo> hashTable;
+    private long black_to_move;
 
     /**
      * Constructor per defecte del jugador automàtic. Inicialitza els atributs
@@ -71,6 +72,7 @@ public class PlayerID implements IPlayer, IAuto {
                 }
             }
         }
+        black_to_move = rand.nextLong();
         hashTable = new HashMap<>();
     }
 
@@ -444,7 +446,7 @@ public class PlayerID implements IPlayer, IAuto {
      */
     private long getZobristHash(GameStatus gs) {
         long hash = 0;
-
+        hash ^= black_to_move;
         for (int i = 0; i < gs.getSize(); ++i) {
             for (int j = 0; j < gs.getSize(); ++j) {
                 CellType casella = gs.getPos(i, j);
