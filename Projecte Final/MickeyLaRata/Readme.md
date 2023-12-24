@@ -2,7 +2,7 @@
 
 Ernest Anguera Aixalà: 48102381C
 
-Naïm Barba Morilla: 
+Naïm Barba Morilla: 47669436G
 
 ## Enllaç del projecte:
 
