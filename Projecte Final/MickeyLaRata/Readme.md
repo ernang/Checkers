@@ -1,8 +1,8 @@
 # MICKEY LA RATA
 
-Ernest Anguera Aixalà: 48102381C
+Ernest Anguera Aixalà
 
-Naïm Barba Morilla: 47669436G
+Naïm Barba Morilla
 
 ## Enllaç del projecte:
 
