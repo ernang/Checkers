@@ -15,14 +15,19 @@
 
 3. **Comparació del Temps d'Execució:**
    - Anàlisi gràfica del temps d'execució entre MiniMax i MiniMax-ID en diferents nivells de profunditat.
+    ![image](https://github.com/eur1p3des/Checkers/assets/72199195/53640904-b72d-43de-b87c-294f4e189e12)
+
 
 4. **Nivells Baixats amb MiniMax-ID:**
    - Visualització de la relació entre temps disponible i nivells baixats amb MiniMax-ID.
+     ![image](https://github.com/eur1p3des/Checkers/assets/72199195/28fabd82-3ec0-4dfe-881b-582efede0ff5)
+
 
 5. **Estratègies d'Optimització:**
    - Ús de la poda Alpha-Beta per reduir el nombre de nodes explorats.
-   - Implementació del Zobrist Hashing per millorar l'eficiència de la poda.
-   - Utilització d'un HashMap per emmagatzemar informació sobre estats del joc i millors moviments.
+     ![image](https://github.com/eur1p3des/Checkers/assets/72199195/6ad75984-cf87-4589-958c-d9c584d34389)
+   - Implementació del Zobrist Hashing per millorar l'eficiència de la poda i utilització d'un HashMap per emmagatzemar informació sobre estats del joc i millors moviments.
+     ![image](https://github.com/eur1p3des/Checkers/assets/72199195/2f5ff97f-6243-4379-9e56-318e63dfa7cc)
 
 6. **Repartiment de Tasques:**
 
