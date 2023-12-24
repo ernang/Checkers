@@ -1,20 +1,18 @@
 package edu.upc.epsevg.prop.checkers.players;
 
 import edu.upc.epsevg.prop.checkers.CellType;
-import edu.upc.epsevg.prop.checkers.GameStatus;
 import edu.upc.epsevg.prop.checkers.IAuto;
 import edu.upc.epsevg.prop.checkers.IPlayer;
 import edu.upc.epsevg.prop.checkers.MoveNode;
 import edu.upc.epsevg.prop.checkers.PlayerMove;
 import edu.upc.epsevg.prop.checkers.PlayerType;
 import edu.upc.epsevg.prop.checkers.SearchType;
+import edu.upc.epsevg.prop.checkers.GameStatus;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.Random;
 
 /**
  * Estratègia de jugador automàtic que implementa l'algorisme MiniMax Iterative
@@ -34,46 +32,28 @@ public class PlayerID implements IPlayer, IAuto {
     private String name = "MickeyID";
     private int nodesExplorats;
     private int profunditat;
+    private int maxDepth;
     private boolean timeout;
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
     private List<Point> millorMoviment;
+    private int profunditat_actual;
 
-    // Zobrist Hashing
-    private class GameInfo {
-
-        private double heuristica;
-        private PlayerType jugador;
-
-        public GameInfo(double heuristica, PlayerType jugador) {
-            this.heuristica = heuristica;
-            this.jugador = jugador;
-        }
-
-    }
-    private long[][][] zobrist;
-    private HashMap<Long, GameInfo> hashTable;
-    private long black_to_move;
+    /*========================
+    *  ZOBRIST HASHING
+    * =======================*/
+    private HashMap<ProfeNoFuncaStatus, GameInfo> hashMap;
 
     /**
      * Constructor per defecte del jugador automàtic. Inicialitza els atributs
      * de la classe.
      */
     public PlayerID() {
+        maxDepth = Integer.MAX_VALUE;
         nodesExplorats = 0;
         profunditat = 0;
         timeout = false;
-        Random rand = new Random();
-        zobrist = new long[8][8][4];
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                for (int k = 0; k < 4; k++) {
-                    zobrist[i][j][k] = rand.nextLong();
-                }
-            }
-        }
-        black_to_move = rand.nextLong();
-        hashTable = new HashMap<>();
+        hashMap = new HashMap<>();
     }
 
     /**
@@ -101,8 +81,10 @@ public class PlayerID implements IPlayer, IAuto {
         millorMoviment = new ArrayList<>();
         jugadorMaxim = gs.getCurrentPlayer();
         jugadorMinim = PlayerType.opposite(jugadorMaxim);
-        List<Point> moviment = ids(gs);
-        return new PlayerMove(moviment, nodesExplorats, profunditat, SearchType.MINIMAX);
+        profunditat_actual = 1;
+        ProfeNoFuncaStatus ps = new ProfeNoFuncaStatus(gs);
+        List<Point> moviment = ids(ps);
+        return new PlayerMove(moviment, nodesExplorats, profunditat_actual - 1, SearchType.MINIMAX);
     }
 
     /**
@@ -113,16 +95,14 @@ public class PlayerID implements IPlayer, IAuto {
      * @param gs Estat actual del joc.
      * @return Millor moviment trobat durant la cerca.
      */
-    private List<Point> ids(GameStatus gs) {
-        int depth = 1;
-        while (!timeout) {
-            List<Point> moviment = miniMax(gs, depth);
+    private List<Point> ids(ProfeNoFuncaStatus gs) {
+        while (!timeout && profunditat_actual <= maxDepth) {
+            List<Point> moviment = miniMax(gs, profunditat_actual);
             if (!timeout) {
                 millorMoviment = moviment;
             }
-            depth++;
+            profunditat_actual++;
         }
-        profunditat = depth;
         return millorMoviment;
     }
 
@@ -136,19 +116,19 @@ public class PlayerID implements IPlayer, IAuto {
      * però si es dóna un timeout, retornem null, ja que no s'haurà acabat
      * l'execució de la cerca MiniMax
      */
-    private List<Point> miniMax(GameStatus gs, int depth) {
+    private List<Point> miniMax(ProfeNoFuncaStatus gs, int depth) {
         List<Point> moviment = new ArrayList<>();
-
         double valorHeuristic = -2000000;
         double alpha = Double.NEGATIVE_INFINITY;
         double beta = Double.POSITIVE_INFINITY;
+
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
         camins = ordenarCami(camins, millorMoviment);
         for (List<Point> cami : camins) {
             if (timeout) {
                 return null;
             }
-            GameStatus aux = new GameStatus(gs);
+            ProfeNoFuncaStatus aux = new ProfeNoFuncaStatus(gs);
             aux.movePiece(cami);
             double heuristica = minValor(aux, depth - 1, alpha, beta);
 
@@ -175,7 +155,8 @@ public class PlayerID implements IPlayer, IAuto {
      * @return El valor mínim de la heurística per a l'estat de joc donat, o bé
      * 0 en cas de timeout.
      */
-    private double minValor(GameStatus gs, int depth, double alpha, double beta) {
+    private double minValor(ProfeNoFuncaStatus gs, int depth, double alpha, double beta) {
+        int indexMillorMoviment = -1;
         if (timeout) {
             return 0;
         }
@@ -191,25 +172,28 @@ public class PlayerID implements IPlayer, IAuto {
         if (depth == 0) {
             return evaluarEstat(gs);
         }
-
-        long hash = getZobristHash(gs);
-        GameInfo gameInfo = hashTable.get(hash);
-        if (gameInfo != null && gameInfo.jugador == jugadorMaxim) {
-            valorHeuristic = gameInfo.heuristica;
-        }
+        GameInfo gameInfo = hashMap.get(gs);
+        int movInfo = (gameInfo != null) ? gameInfo.getIndexMoviment() : -1;
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
-        for (List<Point> cami : camins) {
-            GameStatus aux = new GameStatus(gs);
+        if (movInfo > -1 && movInfo < camins.size()) {
+            camins.add(0, camins.remove(movInfo));
+        }
+        for (int i = 0; i < camins.size(); i++) {
+            List<Point> cami = camins.get(i);
+            ProfeNoFuncaStatus aux = new ProfeNoFuncaStatus(gs);
             aux.movePiece(cami);
 
             double heuristica = maxValor(aux, depth - 1, alpha, beta);
+            if (heuristica < valorHeuristic) {
+                indexMillorMoviment = i;
+            }
             valorHeuristic = Math.min(valorHeuristic, heuristica);
             beta = Math.min(beta, valorHeuristic);
             if (alpha >= beta) {
                 break;
             }
         }
-        hashTable.put(hash, new GameInfo(valorHeuristic, jugadorMinim));
+        hashMap.put(gs, new GameInfo(indexMillorMoviment, profunditat_actual - depth));
         return valorHeuristic;
     }
 
@@ -223,7 +207,8 @@ public class PlayerID implements IPlayer, IAuto {
      * @param beta Valor beta per a l'algoritme alpha-beta pruning.
      * @return El valor màxim de la heurística o 0 en cas de timeout.
      */
-    private double maxValor(GameStatus gs, int depth, double alpha, double beta) {
+    private double maxValor(ProfeNoFuncaStatus gs, int depth, double alpha, double beta) {
+        int indexMillorMoviment = -1;
         if (timeout) {
             return 0;
         }
@@ -239,23 +224,27 @@ public class PlayerID implements IPlayer, IAuto {
         if (depth == 0) {
             return evaluarEstat(gs);
         }
-        long hash = getZobristHash(gs);
-        GameInfo gameInfo = hashTable.get(hash);
-        if (gameInfo != null && gameInfo.jugador == jugadorMinim) {
-            valorHeuristic = gameInfo.heuristica;
-        }
+        GameInfo gameInfo = hashMap.get(gs);
+        int movInfo = (gameInfo != null) ? gameInfo.getIndexMoviment() : -1;
         List<List<Point>> camins = obtenirMoviments(gs.getMoves());
-        for (List<Point> cami : camins) {
-            GameStatus aux = new GameStatus(gs);
+        if (movInfo > -1 && movInfo < camins.size()) {
+            camins.add(0, camins.remove(movInfo));
+        }
+        for (int i = 0; i < camins.size(); i++) {
+            List<Point> cami = camins.get(i);
+            ProfeNoFuncaStatus aux = new ProfeNoFuncaStatus(gs);
             aux.movePiece(cami);
             double heuristica = minValor(aux, depth - 1, alpha, beta);
+            if (heuristica > valorHeuristic) {
+                indexMillorMoviment = i;
+            }
             valorHeuristic = Math.max(heuristica, valorHeuristic);
             alpha = Math.max(valorHeuristic, alpha);
             if (alpha >= beta) {
                 break;
             }
         }
-        hashTable.put(hash, new GameInfo(valorHeuristic, jugadorMaxim));
+        hashMap.put(gs, new GameInfo(indexMillorMoviment, profunditat_actual - depth));
         return valorHeuristic;
     }
 
@@ -316,7 +305,7 @@ public class PlayerID implements IPlayer, IAuto {
      * @param s Estat actual del joc.
      * @return Valor de l'heurística per a l'estat donat.
      */
-    private double evaluarEstat(GameStatus s) {
+    private double evaluarEstat(ProfeNoFuncaStatus s) {
         nodesExplorats++;
         return evaluarEstatAux(s, jugadorMaxim) - evaluarEstatAux(s, jugadorMinim);
     }
@@ -329,7 +318,7 @@ public class PlayerID implements IPlayer, IAuto {
      * @return Valor de l'heurística per a l'estat donat i el jugador
      * especificat.
      */
-    private double evaluarEstatAux(GameStatus s, PlayerType jugador) {
+    private double evaluarEstatAux(ProfeNoFuncaStatus s, PlayerType jugador) {
         double heuristica = 0;
         int pawnPieces = 0;
         int kingPieces = 0;
@@ -434,42 +423,6 @@ public class PlayerID implements IPlayer, IAuto {
             camins.add(0, camins.remove(index));
         }
         return camins;
-    }
-
-    /**
-     * Calcula i retorna el hash Zobrist per a l'estat actual del joc. Utilitza
-     * l'algorisme Zobrist hashing per generar un valor únic basat en les
-     * posicions actuals del taulell i els tipus de cel·la corresponents.
-     *
-     * @param gs L'estat actual del joc (GameStatus).
-     * @return El hash Zobrist calculat per a l'estat actual del joc.
-     */
-    private long getZobristHash(GameStatus gs) {
-        long hash = 0;
-        hash ^= black_to_move;
-        for (int i = 0; i < gs.getSize(); ++i) {
-            for (int j = 0; j < gs.getSize(); ++j) {
-                CellType casella = gs.getPos(i, j);
-                switch (casella) {
-                    case P1:
-                        hash ^= zobrist[i][j][0];
-                        break;
-                    case P2:
-                        hash ^= zobrist[i][j][1];
-                        break;
-                    case P1Q:
-                        hash ^= zobrist[i][j][2];
-                        break;
-                    case P2Q:
-                        hash ^= zobrist[i][j][3];
-                        break;
-                    default:
-                        break;
-                }
-
-            }
-        }
-        return hash;
     }
 
     /**

@@ -1,17 +1,14 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package edu.upc.epsevg.prop.checkers.players;
-
-import edu.upc.epsevg.prop.checkers.PlayerType;
-import java.awt.Point;
-import java.util.List;
 
 /**
  * Classe que representa la informació d'una partida, incloent detalls com el
  * moviment realitzat, el nombre de nivells per sota, el valor heurístic i el
  * tipus de jugador.
+ *
+ * Aquesta classe proporciona una estructura per emmagatzemar informació
+ * relativa a una partida, incloent detalls com el moviment realitzat, el nombre
+ * de nivells per sota del joc, i altres aspectes relacionats amb la gestió de
+ * la partida.
  *
  * @author Ernest Anguera
  * @author Naïm Barba
@@ -29,7 +26,6 @@ public class GameInfo {
      */
     private int nivellsPerSota;
 
-
     /**
      * Constructor de la classe GameInfo.
      *
@@ -41,18 +37,38 @@ public class GameInfo {
         this.nivellsPerSota = nivellsPerSota;
     }
 
+    /**
+     * Obté l'índex del moviment realitzat.
+     *
+     * @return L'índex del moviment realitzat.
+     */
     public int getIndexMoviment() {
         return indexMoviment;
     }
 
+    /**
+     * Estableix l'índex del moviment realitzat.
+     *
+     * @param indexMoviment L'índex del moviment realitzat.
+     */
     public void setIndexMoviment(int indexMoviment) {
         this.indexMoviment = indexMoviment;
     }
 
+    /**
+     * Obté el nombre de nivells per sota del joc.
+     *
+     * @return El nombre de nivells per sota del joc.
+     */
     public int getNivellsPerSota() {
         return nivellsPerSota;
     }
 
+    /**
+     * Estableix el nombre de nivells per sota del joc.
+     *
+     * @param nivellsPerSota El nombre de nivells per sota del joc.
+     */
     public void setNivellsPerSota(int nivellsPerSota) {
         this.nivellsPerSota = nivellsPerSota;
     }

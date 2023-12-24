@@ -1,7 +1,3 @@
-/**
- * ProfeNoFuncaStatus és una subclasse de GameStatus que representa l'estat
- * d'un joc de dames amb funcionalitats addicionals relacionades amb la funció de hash Zobrist.
- */
 package edu.upc.epsevg.prop.checkers.players;
 
 import edu.upc.epsevg.prop.checkers.CellType;
@@ -20,6 +16,11 @@ import java.util.Random;
  * funció de hash Zobrist per calcular eficientment valors de hash únics per
  * estats de joc diferents.
  *
+ * Aquesta classe utilitza una representació eficient del tauler de joc
+ * mitjançant la funció de hash Zobrist per optimitzar la comparació d'estats de
+ * joc i millorar l'eficiència en la gestió de col·lisions en estructures de
+ * dades com ara taules de hash.
+ *
  * @author Ernest Anguera
  * @author Naïm Barba
  */
@@ -34,6 +35,10 @@ public class ProfeNoFuncaStatus extends GameStatus {
     private int hash;
     private boolean hash_updated = false;
 
+    /**
+     * Inicialitza els valors de hash Zobrist i la variable que indica el torn
+     * del jugador.
+     */
     static {
         zobrist = new int[8][8][4];
         Random rand = new Random();
@@ -67,6 +72,11 @@ public class ProfeNoFuncaStatus extends GameStatus {
         super(gs);
     }
 
+    /**
+     * Calcula el valor de hash Zobrist per a l'estat actual del tauler de joc.
+     *
+     * @return El valor de hash Zobrist per a l'estat actual del tauler de joc.
+     */
     @Override
     public int hashCode() {
         if (hash_updated) {
@@ -98,6 +108,13 @@ public class ProfeNoFuncaStatus extends GameStatus {
         return hash;
     }
 
+    /**
+     * Compara aquest objecte ProfeNoFuncaStatus amb un altre objecte per
+     * determinar si són iguals.
+     *
+     * @param obj L'objecte a comparar amb aquest ProfeNoFuncaStatus.
+     * @return Cert si els objectes són iguals, fals altrament.
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -113,6 +130,12 @@ public class ProfeNoFuncaStatus extends GameStatus {
         return this.hashCode() == other.hashCode();
     }
 
+    /**
+     * Mou les peces del joc segons la llista de punts proporcionada i
+     * actualitza el valor de hash per reflectir els canvis.
+     *
+     * @param list La llista de punts que descriu el moviment de les peces.
+     */
     @Override
     public void movePiece(List<Point> list) {
         super.movePiece(list);

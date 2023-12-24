@@ -10,10 +10,8 @@ import edu.upc.epsevg.prop.checkers.PlayerType;
 import edu.upc.epsevg.prop.checkers.SearchType;
 import java.awt.Point;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Estratègia de jugador automàtic que implementa l'algorisme MiniMax per a les
@@ -28,7 +26,7 @@ import java.util.Random;
  * @version 1.0
  */
 public class PlayerMiniMax implements IPlayer, IAuto {
-    
+
     private String name = "MickeyLaRata";
     private PlayerType jugadorMaxim;
     private PlayerType jugadorMinim;
@@ -47,7 +45,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             throw new RuntimeException("La profunditat ha de ser més gran o igual a 1.");
         }
     }
-    
+
     @Override
     public void timeout() {
         // Nothing to do! I'm so fast, I never timeout 8-)
@@ -78,24 +76,24 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      */
     private List<Point> miniMax(GameStatus s) {
         double heuristicaActual = -20000, alpha = Double.NEGATIVE_INFINITY, beta = Double.POSITIVE_INFINITY;
-        
+
         List<List<Point>> camins = obtenirMoviments(s.getMoves());
         List<Point> points = new ArrayList<>();
         for (List<Point> cami : camins) {
-            
+
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
-            
+
             double valorHeuristic = minValor(aux, profunditat - 1, alpha, beta);
-            
+
             if (valorHeuristic > heuristicaActual) {
                 heuristicaActual = valorHeuristic;
                 points = cami;
             }
-            
+
             alpha = Math.max(alpha, heuristicaActual);
         }
-        
+
         return points;
     }
 
@@ -119,7 +117,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
                 return 0;
             }
         }
-        
+
         if (depth == 0) {
             return evaluarEstat(s);
         }
@@ -127,16 +125,16 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         for (List<Point> cami : camins) {
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
-            
+
             double heuristicaActual = maxValor(aux, depth - 1, alpha, beta);
             valorHeuristic = Math.min(valorHeuristic, heuristicaActual);
             beta = Math.min(valorHeuristic, beta);
-            
+
             if (alpha >= beta) {
                 break;
             }
         }
-        
+
         return valorHeuristic;
     }
 
@@ -151,7 +149,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      */
     private double maxValor(GameStatus s, int depth, double alpha, double beta) {
         double valorHeuristic = -10000;
-        
+
         if (s.isGameOver()) {
             if (s.GetWinner() == jugadorMinim) {
                 return valorHeuristic;
@@ -160,20 +158,20 @@ public class PlayerMiniMax implements IPlayer, IAuto {
                 return 0;
             }
         }
-        
+
         if (depth == 0) {
             return evaluarEstat(s);
         }
-        
+
         List<List<Point>> camins = obtenirMoviments(s.getMoves());
         for (List<Point> cami : camins) {
             GameStatus aux = new GameStatus(s);
             aux.movePiece(cami);
-            
+
             double heuristicaActual = minValor(aux, depth - 1, alpha, beta);
             valorHeuristic = Math.max(valorHeuristic, heuristicaActual);
             alpha = Math.max(valorHeuristic, alpha);
-            
+
             if (alpha >= beta) {
                 break;
             }
@@ -191,7 +189,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      */
     private List<List<Point>> obtenirMoviments(List<MoveNode> moviments) {
         List<List<Point>> resultats = new ArrayList<>();
-        
+
         for (MoveNode moviment : moviments) {
             List<Point> cami = new ArrayList<>();
             cami.add(moviment.getPoint());
@@ -217,7 +215,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             resultats.add(new ArrayList<>(cami));
             return;
         }
-        
+
         for (MoveNode següentMoviment : següentsMoviments) {
             cami.add(següentMoviment.getPoint());
             obtenirMovimentsAuxiliars(següentMoviment, cami, resultats);
@@ -258,7 +256,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         int opponentPieces = 0;
         List<Point> friendpos = new ArrayList<>();
         List<Point> enemypos = new ArrayList<>();
-        
+
         for (int i = 0; i < s.getSize(); ++i) {
             for (int j = 0; j < s.getSize(); ++j) {
                 CellType casilla = s.getPos(i, j);
@@ -289,9 +287,9 @@ public class PlayerMiniMax implements IPlayer, IAuto {
                                 safePieces++;
                             }
                         }
-                        
+
                     } else {
-                        
+
                         if (i > 0 && j > 0 && i < s.getSize() - 1 && j < s.getSize() - 1) {
                             if (s.getPos(i - 1, j + 1).getPlayer() == PlayerType.PLAYER1 && s.getPos(i + 1, j - 1) == CellType.EMPTY) {
                                 vulnerablePieces++;
@@ -300,9 +298,9 @@ public class PlayerMiniMax implements IPlayer, IAuto {
                             } else {
                                 safePieces++;
                             }
-                            
+
                         }
-                        
+
                     }
                 } else if (casilla.getPlayer() == PlayerType.opposite(jugador)) {
                     opponentPieces++;
@@ -317,7 +315,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
             double proximityToEnemies = 0;
             Point enemyPos = enemypos.get(0);
             for (Point friendPos : friendpos) {
-                
+
                 int distance = Math.abs(friendPos.x - enemyPos.x) + Math.abs(friendPos.y - enemyPos.y);
                 proximityToEnemies += 1.0 / (distance + 1); // Añade un bonus inversamente proporcional a la distancia
 
@@ -334,7 +332,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
 
         return heuristica;
     }
-    
+
     /**
      * Ens avisa que hem de parar la cerca en curs perquè s'ha exhaurit el temps
      * de joc.
